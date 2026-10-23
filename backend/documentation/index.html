@@ -1,0 +1,436 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>nestjs-auth-template documentation</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+	   <link rel="stylesheet" href="./styles/style.css">
+        <link rel="stylesheet" href="./styles/dark.css">
+    </head>
+    <body>
+          <script>
+               // Blocking script to avoid flickering dark mode
+               // Dark mode toggle button
+               var useDark = window.matchMedia('(prefers-color-scheme: dark)');
+               var darkModeState = useDark.matches;
+               var $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               var $darkModeToggles = document.querySelectorAll('.dark-mode-switch');
+               var darkModeStateLocal = localStorage.getItem('compodoc_darkmode-state');
+
+               function checkToggle(check) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].checked = check;
+                    }
+               }
+
+               function toggleDarkMode(state) {
+                    if (window.localStorage) {
+                         localStorage.setItem('compodoc_darkmode-state', state);
+                    }
+
+                    checkToggle(state);
+
+                    const hasClass = document.body.classList.contains('dark');
+
+                    if (state) {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.add('dark');
+                         }
+                         if (!hasClass) {
+                              document.body.classList.add('dark');
+                         }
+                    } else {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.remove('dark');
+                         }
+                         if (hasClass) {
+                              document.body.classList.remove('dark');
+                         }
+                    }
+               }
+
+               useDark.addEventListener('change', function (evt) {
+                    toggleDarkMode(evt.matches);
+               });
+               if (darkModeStateLocal) {
+                    darkModeState = darkModeStateLocal === 'true';
+               }
+               toggleDarkMode(darkModeState);
+          </script>
+          <script>
+              // --- Iframe navigation tracking for Template Playground ---
+              function sendCurrentUrlToParent() {
+                  if (window.parent && window.parent !== window) {
+                      window.parent.postMessage({
+                          type: 'compodoc-iframe-navigate',
+                          url: window.location.pathname + window.location.hash
+                      }, '*');
+                  }
+              }
+              window.addEventListener('hashchange', sendCurrentUrlToParent, false);
+              window.addEventListener('popstate', sendCurrentUrlToParent, false);
+              window.addEventListener('DOMContentLoaded', sendCurrentUrlToParent, false);
+          </script>
+
+        <div class="navbar navbar-default navbar-fixed-top d-md-none p-0">
+               <div class="d-flex">
+                    <a href="./" class="navbar-brand">nestjs-auth-template documentation</a>
+                    <button type="button" class="btn btn-default btn-menu ion-ios-menu" id="btn-menu"></button>
+               </div>
+        </div>
+
+        <div class="xs-menu menu" id="mobile-menu">
+                <div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search">
+    <button type="button"
+        class="search-input-clear"
+        aria-label="Clear search"
+        data-search-input-clear>&times;</button>
+</div>
+            <compodoc-menu></compodoc-menu>
+        </div>
+
+        <div class="container-fluid main">
+           <div class="row main">
+               <div class="d-none d-md-block menu">
+                   <compodoc-menu mode="normal"></compodoc-menu>
+               </div>
+               <!-- START CONTENT -->
+               <div class="content readme">
+                   <div class="content-data">
+
+
+<h1>NestJS Authentication Boilerplate</h1>
+<p><a href="https://nestjs.com/"><img src="https://img.shields.io/badge/NestJS-11-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" class="img-responsive"></a>
+<a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" class="img-responsive"></a>
+<a href="https://redis.io/"><img src="https://img.shields.io/badge/Redis-ioredis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" class="img-responsive"></a>
+<a href="https://typeorm.io/"><img src="https://img.shields.io/badge/PostgreSQL-TypeORM-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" class="img-responsive"></a>
+<a href="https://jwt.io/"><img src="https://img.shields.io/badge/JWT-Dual--Token-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT" class="img-responsive"></a>
+<a href="https://swagger.io/"><img src="https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black" alt="Swagger" class="img-responsive"></a></p>
+<h3>Enterprise-grade dual-token authentication — lean, Redis-accelerated, and production-ready out of the box.</h3>
+<hr>
+<h2>Overview &amp; Why This Is The Best</h2>
+<p>Authentication is the one layer every serious product must get right. This boilerplate solves it once — with a <strong>dual-token JWT architecture</strong>, a <strong>custom generic <code>RedisService</code></strong>, and <strong>zero-database refresh session caching</strong> — so you ship features instead of reinventing security.</p>
+<p><strong>Why this exact setup powers 99.9% of apps:</strong></p>
+<table class="table table-bordered compodoc-table">
+<thead>
+<tr><th>Strength</th><th>What it delivers</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Blazing-fast Redis</strong></td><td>Refresh lookups and rotations hit in-memory Redis via a typed <code>get</code> / <code>set</code> / <code>del</code> cache layer — not your primary database.</td></tr>
+<tr><td><strong>Zero DB bottlenecks</strong></td><td>User identity lives in PostgreSQL; session refresh payloads live in Redis. High-frequency <code>/authentication/refresh</code> traffic never touches the DB.</td></tr>
+<tr><td><strong>Horizontal scalability</strong></td><td>Stateless access JWTs + shared Redis sessions scale cleanly across instances.</td></tr>
+<tr><td><strong>Enterprise OWASP posture</strong></td><td><code>HttpOnly</code> cookies, Bearer access verification, single-use refresh rotation with <code>redis.del</code> replay defense — without over-engineering.</td></tr>
+</tbody>
+</table>
+<p>Build startups on it. Scale large systems with it. This is the lean, bulletproof engineering standard.</p>
+<hr>
+<h2>Core Architecture &amp; Security Patterns</h2>
+<h3>1. Zero-DB Redis Session Caching</h3>
+<p>On register and login, a signed refresh JWT is issued and its session payload is cached in Redis under:</p>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-text">refresh_token:&lt;refreshJwt&gt;</code></pre></div><p>Payloads include session metadata (<code>userId</code> / <code>email</code> / <code>createdAt</code>) with a <strong>7-day TTL</strong> (<code>604800</code> seconds). Refresh verification resolves entirely from Redis — <strong>no database round-trip</strong> on the hot path.</p>
+<p>The generic <code>RedisService</code> implements <code>ICacheManager</code>:</p>
+<table class="table table-bordered compodoc-table">
+<thead>
+<tr><th>Method</th><th>Role</th></tr>
+</thead>
+<tbody>
+<tr><td><code>get&lt;T&gt;(key)</code></td><td>Typed read with JSON parse</td></tr>
+<tr><td><code>set&lt;T&gt;(key, value, ttlSeconds?)</code></td><td>Write with optional <code>EX</code> TTL</td></tr>
+<tr><td><code>del(key)</code></td><td>Immediate key destruction</td></tr>
+</tbody>
+</table>
+<h3>2. Single-Use Token Rotation &amp; Theft / Replay Defense</h3>
+<p>Every successful refresh is a <strong>one-shot rotation</strong>:</p>
+<ol>
+<li>Lookup the current refresh cookie against Redis.</li>
+<li>Mint a new access + refresh token pair via <code>JwtProvider</code>.</li>
+<li><strong><code>redis.del</code></strong> the previous <code>refresh_token:&lt;oldJwt&gt;</code> key.</li>
+<li><code>redis.set</code> the new session under <code>refresh_token:&lt;newJwt&gt;</code>.</li>
+</ol>
+<p>A stolen or replayed refresh token finds an empty key and is rejected with <code>UnauthorizedException</code>. Rotation + deletion is the replay firewall — elegant, atomic, and fast.</p>
+<h3>3. XSS-Resistant <code>HttpOnly</code> Cookie Architecture</h3>
+<ul>
+<li><strong>Access token</strong> — returned in the JSON body (<code>accessToken</code>); clients send <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+<li><strong>Refresh token</strong> — delivered in the <code>refresh-token</code> cookie via <code>cookie-parser</code>, with login setting <code>{ httpOnly: true, sameSite: &quot;strict&quot; }</code>.</li>
+<li><strong>Logout</strong> — clears the cookie and <code>redis.del</code>s the session key in one clean cut.</li>
+</ul>
+<p>JavaScript on the page never needs to touch the refresh credential. Access stays short-lived and Bearer-verified; refresh stays cookie-bound and Redis-gated.</p>
+<hr>
+<h2>Visual Architecture Diagrams</h2>
+<h3>System Data Flow</h3>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-mermaid">flowchart LR
+  subgraph Client
+    C[Client App]
+  end
+
+  subgraph NestJS[&quot;NestJS Application&quot;]
+    CTRL[AuthenticationController]
+    AG[AuthenticationGuard]
+    ATG[AccessTokenGuard]
+    SVC[AuthenticationService]
+    JWT[JwtProvider]
+    HASH[BcryptProvider]
+  end
+
+  subgraph Data
+    REDIS[(Redis&lt;br/&gt;RedisService)]
+    PG[(PostgreSQL&lt;br/&gt;TypeORM Users)]
+  end
+
+  C --&gt;|HTTP + Cookie / Bearer| CTRL
+  CTRL --&gt; AG
+  AG --&gt;|AuthType.BEARER| ATG
+  ATG --&gt;|verify JWT_ACCESS_SECRET| JWT
+  CTRL --&gt; SVC
+  SVC --&gt; JWT
+  SVC --&gt; HASH
+  SVC --&gt;|refresh_token:* get/set/del| REDIS
+  SVC --&gt;|user create / lookup| PG</code></pre></div><h3>Token Rotation &amp; Security Sequence</h3>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-mermaid">sequenceDiagram
+  autonumber
+  participant Client
+  participant Controller as AuthenticationController
+  participant Service as AuthenticationService
+  participant Redis as RedisService
+  participant JWT as JwtProvider
+
+  Client-&gt;&gt;Controller: GET /authentication/refresh&lt;br/&gt;(cookie: refresh-token)
+  Controller-&gt;&gt;Service: refresh(prevRefreshToken)
+  Service-&gt;&gt;Redis: get(refresh_token:prev)
+  alt Session missing
+    Redis--&gt;&gt;Service: null
+    Service--&gt;&gt;Client: 401 Unauthorized
+  else Session valid
+    Redis--&gt;&gt;Service: session payload
+    Service-&gt;&gt;JWT: generateTokens(payload)
+    JWT--&gt;&gt;Service: { accessToken, refreshToken }
+    Service-&gt;&gt;Redis: del(refresh_token:prev)
+    Note over Redis: Replay protection — old key destroyed
+    Service-&gt;&gt;Redis: set(refresh_token:new, payload)
+    Service--&gt;&gt;Controller: rotated tokens
+    Controller--&gt;&gt;Client: Set-Cookie refresh-token&lt;br/&gt;+ { accessToken }
+  end</code></pre></div><hr>
+<h2>Tech Stack &amp; Modular Structure</h2>
+<table class="table table-bordered compodoc-table">
+<thead>
+<tr><th>Layer</th><th>Technology</th></tr>
+</thead>
+<tbody>
+<tr><td>Runtime</td><td>NestJS 11 · TypeScript 5.7</td></tr>
+<tr><td>Auth</td><td><code>@nestjs/jwt</code> · Dual secrets (<code>JWT_ACCESS_SECRET</code> / <code>JWT_REFRESH_SECRET</code>)</td></tr>
+<tr><td>Sessions</td><td>Redis via <code>ioredis</code> · custom <code>RedisService</code></td></tr>
+<tr><td>Persistence</td><td>PostgreSQL · TypeORM</td></tr>
+<tr><td>Cookies</td><td><code>cookie-parser</code> · <code>HttpOnly</code> refresh cookie</td></tr>
+<tr><td>Passwords</td><td>Abstract <code>HashingProvider</code> → <code>BcryptProvider</code></td></tr>
+<tr><td>Docs</td><td>Swagger (<code>/api/docs</code>) · Compodoc (<code>npm run doc</code>)</td></tr>
+</tbody>
+</table>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-text">src/
+├── main.ts                          # cookie-parser, ValidationPipe, Swagger
+├── app.module.ts                    # Config, TypeORM, global AuthenticationGuard
+├── authentication/
+│   ├── authentication.controller.ts # register / login / refresh / logout
+│   ├── authentication.service.ts    # Redis session + rotation + bcrypt flows
+│   ├── authentication.module.ts     # JwtModule + providers
+│   ├── decorators/auth.decorator.ts # &#64;Authentication(AuthType)
+│   ├── dto/                         # RegisterDTO · LoginDTO
+│   ├── enums/                       # AuthType (BEARER | NONE) · providers
+│   ├── guards/
+│   │   ├── authentication.guard.ts  # Global strategy router
+│   │   └── access-token/...         # Bearer JWT verification
+│   └── provider/
+│       ├── jwt.provider.ts          # Dual-token mint + verify
+│       ├── hashing.provider.ts      # Abstract hash contract
+│       └── bcrypt.provider.ts       # bcrypt implementation
+├── redis/
+│   ├── redis.module.ts
+│   ├── redis.service.ts             # Generic get / set / del
+│   └── interfaces/                  # ICacheManager
+└── users/
+    ├── entities/user.entity.ts      # Durable identity store
+    └── provider/find-user.provider.ts</code></pre></div><hr>
+<h2>API Documentation &amp; Architecture Docs</h2>
+<table class="table table-bordered compodoc-table">
+<thead>
+<tr><th>Document</th><th>URL</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Swagger Docs</strong></td><td><a href="http://localhost:3000/api/docs">http://localhost:3000/api/docs</a></td></tr>
+<tr><td><strong>Compodoc Architecture Docs</strong></td><td><a href="http://localhost:3000/docs">http://localhost:3000/docs</a></td></tr>
+</tbody>
+</table>
+<p>Generate and serve Compodoc locally with:</p>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-bash">npm run doc</code></pre></div><hr>
+<h2>Getting Environment Ready &amp; Quick Start</h2>
+<h3>1. Prerequisites</h3>
+<ul>
+<li>Node.js 20+</li>
+<li>PostgreSQL</li>
+<li>Redis (default port <code>6379</code>)</li>
+</ul>
+<h3>2. Clone &amp; install</h3>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-bash">git clone &lt;your-repo-url&gt;
+cd nestjs-auth-template
+npm install</code></pre></div><h3>3. Configure environment</h3>
+<p>Copy the example file and fill in your values:</p>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-bash">cp .env.example .env</code></pre></div><h3>4. Run</h3>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-bash"># development (watch mode)
+npm run start:dev
+
+# production build
+npm run build &amp;&amp; npm run start:prod</code></pre></div><p>The API listens on <code>PORT</code> (default <strong>3000</strong>).</p>
+<hr>
+<h2>API Endpoints Reference</h2>
+<p>Base path: <strong><code>/authentication</code></strong><br>All auth routes are public via <code>@Authentication(AuthType.NONE)</code>. Protected routes elsewhere default to Bearer via the global <code>AuthenticationGuard</code>.</p>
+<table class="table table-bordered compodoc-table">
+<thead>
+<tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>POST</code></td><td><code>/authentication/register</code></td><td>Public</td><td>Create user (bcrypt hash), issue dual tokens, set <code>refresh-token</code> cookie, return <code>{ accessToken }</code></td></tr>
+<tr><td><code>POST</code></td><td><code>/authentication/login</code></td><td>Public</td><td>Validate credentials, issue dual tokens, set <code>HttpOnly</code> + <code>sameSite: strict</code> cookie, return <code>{ accessToken }</code></td></tr>
+<tr><td><code>GET</code></td><td><code>/authentication/refresh</code></td><td>Cookie</td><td>Rotate refresh via Redis <code>get</code> → <code>del</code> → <code>set</code>, return new <code>{ accessToken }</code></td></tr>
+<tr><td><code>POST</code></td><td><code>/authentication/logout</code></td><td>Cookie</td><td>Clear <code>refresh-token</code> cookie and <code>redis.del</code> the session key</td></tr>
+</tbody>
+</table>
+<h3>Request bodies</h3>
+<p><strong>Register</strong> — <code>RegisterDTO</code></p>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-json">{
+  &quot;firstName&quot;: &quot;Ada&quot;,
+  &quot;lastName&quot;: &quot;Lovelace&quot;,
+  &quot;email&quot;: &quot;ada&#64;example.com&quot;,
+  &quot;password&quot;: &quot;your-secure-password&quot;
+}</code></pre></div><p><strong>Login</strong> — <code>LoginDTO</code></p>
+<b>Example :</b><div><pre class="line-numbers"><code class="language-json">{
+  &quot;email&quot;: &quot;ada&#64;example.com&quot;,
+  &quot;password&quot;: &quot;your-secure-password&quot;
+}</code></pre></div><h3>Token contract</h3>
+<table class="table table-bordered compodoc-table">
+<thead>
+<tr><th>Token</th><th>Transport</th><th>Verification</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Access</strong></td><td><code>Authorization: Bearer &lt;token&gt;</code> / JSON <code>accessToken</code></td><td><code>AccessTokenGuard</code> → <code>JwtProvider.verifyToken</code> with <code>JWT_ACCESS_SECRET</code></td></tr>
+<tr><td><strong>Refresh</strong></td><td>Cookie <code>refresh-token</code></td><td>Redis session presence + single-use rotation on refresh</td></tr>
+</tbody>
+</table>
+<hr>
+<h2>License</h2>
+<p>UNLICENSED — private template. Adapt freely for your product.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   </div><div class="search-results">
+    <div class="has-results">
+        <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+        <ul class="search-results-list"></ul>
+    </div>
+    <div class="no-results">
+        <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+    </div>
+</div>
+</div>
+               <!-- END CONTENT -->
+           </div>
+       </div>
+
+          <label class="dark-mode-switch">
+               <input type="checkbox">
+               <span class="slider">
+                    <svg class="slider-icon" viewBox="0 0 24 24" fill="none" height="20" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" width="20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+                    </svg>
+               </span>
+          </label>
+
+       <script>
+            var COMPODOC_CURRENT_PAGE_DEPTH = 0;
+            var COMPODOC_CURRENT_PAGE_CONTEXT = 'readme';
+            var COMPODOC_CURRENT_PAGE_URL = 'index.html';
+            var MAX_SEARCH_RESULTS = 15;
+       </script>
+
+       <script>
+               $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               var updateDarkModeSwitchOffset = function () {
+                    var content = document.querySelector('.content');
+                    var scrollbarWidth = 0;
+
+                    if (content) {
+                         scrollbarWidth = Math.max(0, content.offsetWidth - content.clientWidth);
+                    }
+
+                    document.documentElement.style.setProperty(
+                         '--content-scrollbar-width',
+                         scrollbarWidth + 'px'
+                    );
+               };
+
+               updateDarkModeSwitchOffset();
+               requestAnimationFrame(updateDarkModeSwitchOffset);
+               window.addEventListener('resize', updateDarkModeSwitchOffset);
+
+               checkToggle(darkModeState);
+               if ($darkModeToggleSwitchers.length > 0) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].addEventListener('change', function (event) {
+                              darkModeState = !darkModeState;
+                              toggleDarkMode(darkModeState);
+                         });
+                    }
+               }
+          </script>
+
+       <script src="./js/libs/custom-elements.min.js"></script>
+       <script src="./js/libs/lit-html.js"></script>
+
+       <script src="./js/menu-wc.js" defer></script>
+
+       <script src="./js/libs/bootstrap-native.js"></script>
+
+       <script src="./js/libs/es6-shim.min.js"></script>
+       <script src="./js/libs/EventDispatcher.js"></script>
+       <script src="./js/libs/promise.min.js"></script>
+
+       <script src="./js/compodoc.js"></script>
+
+       <script src="./js/tabs.js"></script>
+       <script src="./js/menu.js"></script>
+       <script src="./js/libs/clipboard.min.js"></script>
+       <script src="./js/libs/prism.js"></script>
+       <script src="./js/sourceCode.js"></script>
+          <script src="./js/search/search.js"></script>
+          <script src="./js/search/lunr.min.js"></script>
+          <script src="./js/search/search-lunr.js"></script>
+          <script src="./js/search/search_index.js"></script>
+       <script src="./js/lazy-load-graphs.js"></script>
+
+
+    </body>
+</html>

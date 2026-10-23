@@ -1,0 +1,1 @@
+export const AUTHENTICATION_DECORATOR_KEY="Auth"
