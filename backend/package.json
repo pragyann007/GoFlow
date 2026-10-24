@@ -21,6 +21,12 @@
     "doc": "npx @compodoc/compodoc -p tsconfig.json -s --port 3001 --watch -d ./documentation"
   },
   "dependencies": {
+    "@angular/common": "^22.2.3",
+    "@angular/compiler": "^22.2.3",
+    "@angular/core": "^22.2.3",
+    "@angular/forms": "^22.2.3",
+    "@angular/platform-browser": "^22.2.3",
+    "@angular/platform-browser-dynamic": "^22.2.3",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^12.0.1",
     "@nestjs/core": "^11.0.1",
@@ -38,9 +44,11 @@
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
+    "rxjs": "^7.8.2",
     "swagger-ui-express": "^5.0.1",
-    "typeorm": "^1.1.2"
+    "tslib": "^2.8.1",
+    "typeorm": "^1.1.2",
+    "zone.js": "^0.16.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
