@@ -6,6 +6,20 @@ import cookieParser from "cookie-parser";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // 1. Configure the Swagger Document Builder
+
+  app.enableCors({
+    // Replace with your actual frontend URL(s)
+    origin: ['http://localhost:3000', 'https://yourdomain.com'], 
+    
+    // Explicitly define allowed methods
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', 
+    
+    // Explicitly define allowed headers
+    allowedHeaders: 'Content-Type, Accept, Authorization', 
+    
+    // Allow cookies / authorization headers to be passed from the frontend
+    credentials: true, 
+  });
   const config = new DocumentBuilder()
     .setTitle('NestJS API Documentation')
     .setDescription('Auto-generated API documentation for the application')
@@ -22,6 +36,6 @@ async function bootstrap() {
     forbidNonWhitelisted:true
   }))
   app.use(cookieParser());
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(3001);
 }
 bootstrap();
