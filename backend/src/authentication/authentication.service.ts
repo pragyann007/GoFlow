@@ -73,13 +73,20 @@ export class AuthenticationService {
 
 
   async login(loginDTO: LoginDTO) {
+    console.log("login x2")
+
     const userExists = await this.findUserProvider.findUserExists(loginDTO.email);
+    console.log("login x3")
 
     if (!userExists) {
       throw new BadRequestException("Email doesnt exists...")
     }
+    console.log("login x4")
+
 
     const verifyPassword = await this.hashProvider.verifyHash(loginDTO.password, userExists.password!);
+    console.log("login x5",verifyPassword)
+
 
     if (!verifyPassword) {
       throw new BadRequestException("Invalid credentials...")

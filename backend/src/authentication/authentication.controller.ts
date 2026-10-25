@@ -8,11 +8,12 @@ import { AuthType } from './enums/auth-types.enum';
 import { AccessTokenGuard } from './guards/access-token/access-token/access-token.guard';
 import { access } from 'fs';
 
-@Authentication(AuthType.NONE)
+
 @Controller('authentication')
 export class AuthenticationController {
   constructor(private readonly authenticationService: AuthenticationService) { }
 
+  @Authentication(AuthType.NONE)
   @Post("register")
   async register(@Res({passthrough:true}) response:Response,@Body() registerDTO:RegisterDTO) {
     console.log("hello hnny bunny me hu",registerDTO)
@@ -22,10 +23,12 @@ export class AuthenticationController {
     return {accessToken:tokens.acessToken}
   }
 
+  @Authentication(AuthType.NONE)
   @Post("login")
   async login(@Res({passthrough:true
 
   }) response:Response,@Body() loginDTO:LoginDTO){
+    console.log("login x1")
     const tokens =  await this.authenticationService.login(loginDTO);
     response.cookie("refresh-token",tokens.refreshToken,{httpOnly:true,sameSite:"strict"});
 

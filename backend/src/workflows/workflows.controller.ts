@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { WorkflowsService } from './workflows.service';
 import { CreateWorkflowDTO } from './dtos/createWorkflow.dto';
+import type  { Request } from 'express';
 
 @Controller('workflows')
 export class WorkflowsController {
@@ -12,7 +13,8 @@ export class WorkflowsController {
   }
 
   @Get()
-  async getAl(){
+  async getAll(@Req() req:Request){
+    console.log("get all called..",req.headers.authorization)
     return this.workflowsService.getAll()
   }
 }
