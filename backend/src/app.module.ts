@@ -12,6 +12,7 @@ import { AuthenticationGuard } from './authentication/guards/authentication.guar
 import { AccessTokenGuard } from './authentication/guards/access-token/access-token/access-token.guard';
 import { JwtProvider } from './authentication/provider/jwt.provider';
 import { WorkflowsModule } from './workflows/workflows.module';
+import { NodeModule } from './nodes-engine/node.module';
 
 @Module({
   imports: [ConfigModule.forRoot({isGlobal:true}),TypeOrmModule.forRootAsync({
@@ -29,7 +30,7 @@ import { WorkflowsModule } from './workflows/workflows.module';
 
     }),
     
-  }),AuthenticationModule, UsersModule, RedisModule, WorkflowsModule],
+  }),AuthenticationModule, UsersModule, RedisModule, WorkflowsModule,NodeModule],
   controllers: [AppController],
   providers: [AppService,{
     provide:APP_GUARD,
