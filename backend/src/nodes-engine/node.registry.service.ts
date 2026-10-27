@@ -41,12 +41,12 @@ export class NodeRegistry implements OnModuleInit {
   listAllNodes(){
     let node = [...this.nodes.values()]
 
-    return node.map((n)=>({
-      name:n.name,
-      type:n.type,
-      description:n.description,
-      icon:n.icon
-    }))
+    return node.map((n)=>{
+      const {execute,...metaData} = n
+    
+      return metaData
+
+    })
   }
 
 }
