@@ -8,7 +8,7 @@ export class  WebHookNode implements INodeDefination{
     name="Webhook Trigger"
     type="webhook-node"
     description="Start a workflow when a HTTP call is recieved"
-    icon="a.jphg"
+    icon="Webhook"
     inputs=0
     outputs=1
     properties=[

@@ -8,8 +8,8 @@ import { Node } from "../decorators/node.decorator";
 export class HttpRequestNode implements INodeDefination  {
     name="HTTP Request"
     type="http-request-node"
-    description:"Fetch data from an external API."
-    icon="a.jphg"
+    description="Fetch data from an external API."
+    icon="Globe"
     inputs=1
     outputs=1
     properties=[

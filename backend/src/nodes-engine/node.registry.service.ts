@@ -44,7 +44,8 @@ export class NodeRegistry implements OnModuleInit {
     return node.map((n)=>({
       name:n.name,
       type:n.type,
-      description:n.description
+      description:n.description,
+      icon:n.icon
     }))
   }
 
