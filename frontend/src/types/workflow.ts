@@ -5,7 +5,12 @@ export interface IFNodeProperty{
     type:"string"|"number"|"boolean"|"options"
     default:any
     options?:string[]
-    placeholder?:string
+    placeholder?:string,
+    displayOptions?: {
+        show?: {
+            [fieldName: string]: any[]; // e.g. { method: ['POST', 'PUT'] }
+        };
+    };
 }
 
 export interface ISidebarNodeSummary {

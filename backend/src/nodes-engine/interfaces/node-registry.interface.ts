@@ -6,6 +6,11 @@ export interface INodeProperty{
     default:any
     options?:string[]
     placeholder?:string
+    displayOptions?:{
+        show?:{
+            [fieldName:string]:any[]
+        }
+    }
 }
 
 export interface INodeDefination{
