@@ -1,3 +1,4 @@
+import { ICanvasNode, IWorkflowCreation } from "@/types/workflow";
 import { Edge, Node } from "@xyflow/react";
 
 
@@ -6,7 +7,7 @@ interface IWorkflowData {
     workflowName:string
 }
 
-export const normaliseWorkflow= (workflowData:IWorkflowData,nodes:Node[],edges:Edge[])=>{
+export const normaliseWorkflow= (workflowData:IWorkflowData,nodes:ICanvasNode[],edges:Edge[]):IWorkflowCreation=>{
 
     const {workflowId,workflowName} = workflowData
 

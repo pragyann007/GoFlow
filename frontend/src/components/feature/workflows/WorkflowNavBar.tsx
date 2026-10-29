@@ -10,6 +10,7 @@ import { useWorkflowStore } from '@/store/useWorkflowStore'
 import { normaliseWorkflow } from '@/app/utils/workflowNormalisation'
 
 import { useParams } from 'next/navigation';
+import { useCreateWorkflow } from '@/hooks/useWorkflows'
 
 const WorkflowNavBar = () => {
     const {setTheme,resolvedTheme} = useTheme()
@@ -25,6 +26,7 @@ const WorkflowNavBar = () => {
 
     const edges = useWorkflowStore((state)=>state.edges)
 
+    const {mutate:workflow,isPending} = useCreateWorkflow()
     const executeWorkflow = ()=>{
         alert("hiiiii node ready vo ki k hoo")
         if(!params.workflowId) return
@@ -33,7 +35,9 @@ const WorkflowNavBar = () => {
             workflowName:wrokflowName
         }
         let res = normaliseWorkflow(workflowData,nodes,edges)
-        console.log("BACKEND PAYLOAD",res)
+        workflow(res)
+
+        
 
 
     }

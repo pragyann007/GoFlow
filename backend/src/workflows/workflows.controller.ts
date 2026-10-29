@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { WorkflowsService } from './workflows.service';
-import { CreateWorkflowDTO } from './dtos/createWorkflow.dto';
+import { CreateWorkflowDTO,WorkflowDTO } from './dtos/createWorkflow.dto';
 import type  { Request } from 'express';
 import { NodeRegistry } from 'src/nodes-engine/node.registry.service';
 import { Authentication } from 'src/authentication/decorators/auth.decorator';
@@ -21,6 +21,15 @@ export class WorkflowsController {
   @Post()
   async create(@Body() createWorkflowDTO:CreateWorkflowDTO){
     return this.workflowsService.create(createWorkflowDTO)
+  }
+
+  @Authentication(AuthType.NONE)
+  @Post("save")
+  async save(@Body() workflowDTO:WorkflowDTO ){
+    console.log(workflowDTO)
+
+    return {"status":"all okay"}
+
   }
 
   @Get()

@@ -33,13 +33,10 @@ export interface IWorkflowNodeData extends ISidebarNodeSummary {
     values?: NodeParameterValues; 
     status?: "IDLE" | "RUNNING" | "COMPLETED" | "FAILED" | "SKIPPED";
     error?: string;
+    [key: string]: unknown; // Add index signature to satisfy Record<string, unknown>
 }
 
 // 👇 NEW: Strongly type the actual nodes structure sitting inside your Zustand canvas state
-export interface ICanvasNode extends XYNode {
-    type: string; // Typically "custom"
-    data: IWorkflowNodeData;
-}
 
 // Your unified core creation payload contract
 export interface IWorkflowCreation {
@@ -47,7 +44,7 @@ export interface IWorkflowCreation {
     name: string
     active: boolean
     // 👇 FIX: Changed from 'node' (singular) to 'nodes' (plural) matching your normalization function array
-    nodes: ICanvasNode[] 
+    nodes: Node[] 
     connections: {
         edges: Edge[]
     }

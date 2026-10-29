@@ -15,7 +15,7 @@ export const workflowService = {
 
     },
     async createWorkflow(workflowData:IWorkflowCreation){
-        const {data} = await api.post("/workflow",workflowData);
+        const {data} = await api.post("/workflows/save",workflowData);
         return data ; 
 
 

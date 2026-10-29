@@ -1,6 +1,7 @@
 import { workflowService } from "@/services/workflow.service"
 import { ISidebarNodeSummary } from "@/types/workflow"
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 
 
@@ -10,5 +11,18 @@ export const useGetAllNodes = ()=>{
         queryFn:workflowService.fetchAllNode,
         staleTime:1000*60*50
 
+    })
+}
+
+export const useCreateWorkflow = ()=>{
+    
+    return useMutation({
+        mutationFn:workflowService.createWorkflow,
+        onSuccess:(data)=>{
+            toast.success("Workflow created..")
+        },
+          onError: (error: any) => {
+                    toast.error(error.message || "Workflow creation failed"); // ❌ Toast here
+                  },
     })
 }
