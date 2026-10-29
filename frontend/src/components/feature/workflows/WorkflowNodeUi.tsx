@@ -14,7 +14,9 @@ interface ReactFlowProps {
 const WorkflowNodeUi = ({id,data}:ReactFlowProps) => {
     const {openFormPanel} = useWorkflowNodeForm()
     const displayForm = () => {
+    
         const {properties,...metadata} = data
+        console.log("props",data)
         openFormPanel(id,properties)
         
     }

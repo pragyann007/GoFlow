@@ -1,4 +1,5 @@
-import React from 'react'
+import React ,{memo}from 'react'
+
 import {
     Sheet,
     SheetClose,
@@ -11,12 +12,25 @@ import {
 } from "@/components/ui/sheet"
 import { useWorkflowNodeForm } from '@/store/useWorkflowNodeForm';
 import NodeConfigForm from './NodeConfigForm';
+import { useWorkflowStore } from '@/store/useWorkflowStore';
 const WorkflowNodesForm = () => {
 
     const activeNodeId = useWorkflowNodeForm((state) => state.activeNodeId);
     const activeNodeBluePrint = useWorkflowNodeForm((state) => state.activeNodeBluePrint);
+    console.log("blueprint",activeNodeBluePrint)
+
+    const updateNodeValue = useWorkflowStore((state)=>state.updateNodeValues)
     // Replace lines 83-85 with this:
     const closeModalForm = useWorkflowNodeForm((state) => state.closeModalForm);
+
+    const handleSubmit = (data:Record<string,any>)=>{
+
+        if(!activeNodeId) return ; 
+        updateNodeValue(activeNodeId,data);
+
+
+
+    }
 
     const isSheetOpen = activeNodeId == null ? false : true
     return (
@@ -32,7 +46,7 @@ const WorkflowNodesForm = () => {
                         <SheetTitle>Are you absolutely sure?</SheetTitle>
                         <SheetDescription>This action cannot be undone.</SheetDescription>
                     </SheetHeader>
-                    <NodeConfigForm fields={activeNodeBluePrint} />
+                    <NodeConfigForm properties={activeNodeBluePrint ?? []} onSubmit={handleSubmit}  />
                 </SheetContent>
 
                 <SheetClose />
@@ -41,4 +55,4 @@ const WorkflowNodesForm = () => {
     )
 }
 
-export default WorkflowNodesForm
+export default memo(WorkflowNodesForm)

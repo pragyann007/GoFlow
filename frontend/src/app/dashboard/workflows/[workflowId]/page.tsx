@@ -10,6 +10,10 @@ import { useWorkflowNodeForm } from '@/store/useWorkflowNodeForm';
 import { stat } from 'fs';
 import WorkflowNodesForm from '@/components/feature/workflows/WorkflowNodesForm';
 
+const nodeTypes = {
+  custom:WorkflowNodeUi
+}
+
 
 const page = () => {
     // const workflowNodes:Node[] = [
@@ -75,12 +79,9 @@ const page = () => {
     // ]
  
 
-    const {nodes,edges,onEdgesChange,onNodesChange} = useWorkflowStore()
+    const {nodes,edges,onEdgesChange,onNodesChange,onConnect} = useWorkflowStore()
 
-    const nodeTypes = {
-        custom:WorkflowNodeUi
-    }
-
+  
 
 
 
@@ -97,6 +98,7 @@ const page = () => {
         panOnScroll={true}
         style={{color:"black"}}
         nodeTypes={nodeTypes}
+        onConnect={onConnect}
         >
             <MiniMap bgColor='black' />
             <Background bgColor='black' />

@@ -1,51 +1,78 @@
-
 import { ISidebarNodeSummary } from "@/types/workflow";
-import { applyEdgeChanges, applyNodeChanges, Edge, EdgeChange, Node, NodeChange } from "@xyflow/react"
+import {
+    addEdge,
+    applyEdgeChanges,
+    applyNodeChanges,
+    Connection,
+    Edge,
+    EdgeChange,
+    Node,
+    NodeChange
+} from "@xyflow/react";
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
-import {create} from "zustand"
-interface WorkflowState{
-    nodes:Node[] ;
-    edges:Edge[];
-
-    onNodesChange:(changes:NodeChange[])=>void;
-    onEdgesChange:(changes:EdgeChange[])=>void;
-
-    addNode:(nodeBlueprint:ISidebarNodeSummary)=>void;
-
+interface WorkflowState {
+    nodes: Node[];
+    edges: Edge[];
+    onNodesChange: (changes: NodeChange[]) => void;
+    onEdgesChange: (changes: EdgeChange[]) => void;
+    onConnect: (connection: Connection) => void;
+    addNode: (nodeBlueprint: ISidebarNodeSummary) => void;
+    updateNodeValues: (nodeId: string, formValues:Record<string,any>) => void
 }
 
-export const useWorkflowStore = create<WorkflowState>((set)=>({
-    nodes:[],
-    edges:[],
-    onNodesChange:(changes:NodeChange[])=>set((state)=>({
-        nodes:applyNodeChanges(changes,state.nodes)
-    })),
-    onEdgesChange:(changes:EdgeChange[])=>set((state)=>({
-        edges:applyEdgeChanges(changes,state.edges)
-    })),
-    addNode:(nodeBluePrint:ISidebarNodeSummary)=>set((state)=>{
+export const useWorkflowStore = create<WorkflowState>()(
+    devtools(
+        (set) => ({
+            nodes: [],
+            edges: [],
 
-        const {name:label,icon,description,inputs,outputs,properties,type} = nodeBluePrint
+            onNodesChange: (changes: NodeChange[]) =>
+                set((state) => ({
+                    nodes: applyNodeChanges(changes, state.nodes) as Node[]
+                }), false, "onNodesChange"), // Added explicit action naming for devtools
 
-        const newNode:Node={
-            id:crypto.randomUUID(),
-            type:"custom",
-            data:{
-               ...nodeBluePrint
-                
+            onEdgesChange: (changes: EdgeChange[]) =>
+                set((state) => ({
+                    edges: applyEdgeChanges(changes, state.edges) as Edge[]
+                }), false, "onEdgesChange"),
 
-            },
-            position:{
-                x:100,
-                y:100
-            }
+            onConnect: (connection: Connection) =>
+                set((state) => ({
+                    edges: addEdge(connection, state.edges)
+                }), false, "onConnect"),
 
-        }
+            addNode: (nodeBluePrint: ISidebarNodeSummary) =>
+                set((state) => {
+                    const offSet = state.nodes.length * 2;
+                    const newNode: Node = {
+                        id: crypto.randomUUID(),
+                        type: "custom",
+                        data: {
+                            ...nodeBluePrint,
+                            values: {}
+                        },
+                        position: {
+                            x: 100 * offSet,
+                            y: 100 * offSet
+                        }
+                    };
 
-        return {nodes:[...state.nodes,newNode]}
-
-    })
-
-
-    
-}))
+                    return {
+                        nodes: [...state.nodes, newNode]
+                    };
+                }, false, "addNode"),
+            updateNodeValues: (nodeId: string, formValues:Record<string,any>) => set((state) => {
+                return (
+                    {
+                        nodes: state.nodes.map((node) => node.id == nodeId ? {...node,data:{
+                            ...node.data,
+                            values:{...(node.data.values || {}),...formValues}
+                        }} : node)
+                    }
+                );
+            })
+        })
+    )
+);

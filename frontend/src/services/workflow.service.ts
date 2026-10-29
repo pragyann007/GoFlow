@@ -1,5 +1,5 @@
 import { api } from "@/lib/axios";
-import {ISidebarNodeSummary} from "../types/workflow"
+import {ISidebarNodeSummary, IWorkflowCreation} from "../types/workflow"
 
 export const workflowService = {
 
@@ -12,6 +12,12 @@ export const workflowService = {
 
 
         return data 
+
+    },
+    async createWorkflow(workflowData:IWorkflowCreation){
+        const {data} = await api.post("/workflow",workflowData);
+        return data ; 
+
 
     }
 
