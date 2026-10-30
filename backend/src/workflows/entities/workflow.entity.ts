@@ -16,10 +16,10 @@ export class Workflows{
     active:boolean
 
     @Column({type:"jsonb",nullable:true,default:[]})
-    nodes:JSON[]
+    nodes:any[]
 
     @Column({type:"jsonb",nullable:true,default:{}})
-    connections:JSON
+    connections:Record<string,any>
 
     @CreateDateColumn()
     createdAt:Date

@@ -13,6 +13,7 @@ import { AccessTokenGuard } from './authentication/guards/access-token/access-to
 import { JwtProvider } from './authentication/provider/jwt.provider';
 import { WorkflowsModule } from './workflows/workflows.module';
 import { NodeModule } from './nodes-engine/node.module';
+import { BullModule } from "@nestjs/bullmq"
 
 @Module({
   imports: [ConfigModule.forRoot({isGlobal:true}),TypeOrmModule.forRootAsync({
@@ -30,6 +31,15 @@ import { NodeModule } from './nodes-engine/node.module';
 
     }),
     
+  }),BullModule.forRootAsync({
+    inject:[ConfigService],
+    useFactory: (configService: ConfigService) => ({
+      connection: {
+        host: configService.get("REDIS_HOST"),
+        port: Number(configService.get("REDIS_PORT")),
+        password: configService.get("REDIS_PASSWORD"),
+      },
+    })
   }),AuthenticationModule, UsersModule, RedisModule, WorkflowsModule,NodeModule],
   controllers: [AppController],
   providers: [AppService,{

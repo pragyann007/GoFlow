@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
 import { WorkflowsService } from './workflows.service';
 import { CreateWorkflowDTO,WorkflowDTO } from './dtos/createWorkflow.dto';
 import type  { Request } from 'express';
@@ -27,8 +27,26 @@ export class WorkflowsController {
   @Post("save")
   async save(@Body() workflowDTO:WorkflowDTO ){
     console.log(workflowDTO)
+    return await this.workflowsService.saveWorkflow(workflowDTO)
 
-    return {"status":"all okay"}
+
+  }
+
+
+  @Authentication(AuthType.NONE)
+  @Get(":workflowId")
+  async getWorkflows(@Param("workflowId") workflowId:string){
+
+    return await this.workflowsService.getOne(workflowId)
+
+  }
+
+
+  @Post(":workflowId/execute")
+  async execute (@Param("workflowId") workflowId:string){
+
+    return await this.workflowsService.executeWorkflow(workflowId)
+
 
   }
 

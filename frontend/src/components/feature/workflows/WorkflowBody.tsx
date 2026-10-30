@@ -42,7 +42,7 @@ useEffect(()=>{
     // ]
     const router = useRouter()
 
-    const redirectWorkflow = (workflowId:string)=>{
+    const openWorkflowPage = (workflowId:string)=>{
         router.push(`/dashboard/workflows/${workflowId}`)
 
     }
@@ -56,7 +56,7 @@ useEffect(()=>{
      {
         workflows.map((workflow)=>{
             return (
-                <div key={workflow.id} onClick={()=>redirectWorkflow(workflow.id)} className='w-full min-h-10 border-border border-2 rounded-xl p-3 flex justify-between items-center cursor-pointer  ' >
+                <div key={workflow.id} onClick={()=>openWorkflowPage(workflow.id)} className='w-full min-h-10 border-border border-2 rounded-xl p-3 flex justify-between items-center cursor-pointer  ' >
                 <div className='flex flex-col gap-4 ' >
                 <h3 className='text-md' >{workflow.name}</h3>
                 <span className='text-xs text-foreground' >Last Updated just now | Created {workflow.createdAt}</span>

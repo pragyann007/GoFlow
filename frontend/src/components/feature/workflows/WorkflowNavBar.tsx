@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { MoonIcon, Play, Plus, SunIcon } from 'lucide-react'
+import { MoonIcon, Play, Plus, Save, SunIcon } from 'lucide-react'
 import React, { useState } from 'react'
 import {useTheme} from "next-themes"
 import ListNodeSheet from './ListNodeSheet'
@@ -10,7 +10,7 @@ import { useWorkflowStore } from '@/store/useWorkflowStore'
 import { normaliseWorkflow } from '@/app/utils/workflowNormalisation'
 
 import { useParams } from 'next/navigation';
-import { useCreateWorkflow } from '@/hooks/useWorkflows'
+import { useCreateWorkflow, useExecuteWorkflow } from '@/hooks/useWorkflows'
 
 const WorkflowNavBar = () => {
     const {setTheme,resolvedTheme} = useTheme()
@@ -26,8 +26,10 @@ const WorkflowNavBar = () => {
 
     const edges = useWorkflowStore((state)=>state.edges)
 
-    const {mutate:workflow,isPending} = useCreateWorkflow()
-    const executeWorkflow = ()=>{
+    const {mutate:workflow,isPending:isCreating} = useCreateWorkflow()
+
+    const {mutate:execute,isPending:isExecuting} = useExecuteWorkflow()
+    const saveWorkflow = ()=>{
         alert("hiiiii node ready vo ki k hoo")
         if(!params.workflowId) return
         const workflowData = {
@@ -36,6 +38,16 @@ const WorkflowNavBar = () => {
         }
         let res = normaliseWorkflow(workflowData,nodes,edges)
         workflow(res)
+
+    }
+    const executeWorkflow = ()=>{
+        alert("hiiiii node ready vo ki k hoo")
+        if(!params.workflowId) return
+
+        const workflowId = Array.isArray(params.workflowId) ? params.workflowId[0] : params.workflowId
+        execute(workflowId)
+        
+       
 
         
 
@@ -66,7 +78,12 @@ const WorkflowNavBar = () => {
 
                     </ListNodeSheet>
 
-                    <Button onClick={executeWorkflow} className={"flex gap-2 "} >
+                    <Button disabled={isCreating} onClick={saveWorkflow} className={"flex gap-2 "} >
+                            <Save />
+                            Save Workflow
+                        </Button>
+
+                    <Button disabled={isExecuting} onClick={executeWorkflow} className={"flex gap-2 "} >
                             <Play />
                             Execute Workflow
                         </Button>

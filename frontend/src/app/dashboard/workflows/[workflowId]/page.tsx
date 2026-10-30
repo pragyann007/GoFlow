@@ -1,6 +1,6 @@
 
 "use client"
-import { useState,useCallback } from 'react';
+import { useState,useCallback, useEffect } from 'react';
 import { ReactFlow,NodeChange ,Background, Controls,Node,Edge,applyEdgeChanges,applyNodeChanges,MiniMap, Panel, EdgeChange } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React from 'react'
@@ -9,6 +9,9 @@ import WorkflowNodeUi from '@/components/feature/workflows/WorkflowNodeUi';
 import { useWorkflowNodeForm } from '@/store/useWorkflowNodeForm';
 import { stat } from 'fs';
 import WorkflowNodesForm from '@/components/feature/workflows/WorkflowNodesForm';
+import { useParams } from 'next/navigation';
+import { useFetchWorkflow } from '@/hooks/useWorkflows';
+import { Spinner } from '@/components/ui/spinner';
 
 const nodeTypes = {
   custom:WorkflowNodeUi
@@ -78,13 +81,40 @@ const page = () => {
      
     // ]
  
+    const params = useParams()
 
-    const {nodes,edges,onEdgesChange,onNodesChange,onConnect} = useWorkflowStore()
+    const {nodes,edges,onEdgesChange,onNodesChange,onConnect,setNodes,setEdges} = useWorkflowStore()
+    const workflowId = Array.isArray(params.workflowId) ? params.workflowId[0] : params.workflowId
+
+    if(!workflowId){
+      return ; 
+    }
+
+    const {data,isLoading} = useFetchWorkflow(workflowId)
+
+    useEffect(()=>{
+
+      if(data){
+        const nodes:Node[] = data.workflow.nodes ;
+        const edges:Edge[] = data.workflow.connections.edges ; 
+
+        setNodes(nodes)
+        setEdges(edges)
+
+      }
+
+    },[data,setNodes,setEdges])
+
 
   
 
 
 
+    if(isLoading){
+      return <>
+        <h1>Loading... <Spinner/> </h1>
+      </>
+    }
   
    return (
     <div className='w-full h-full p-4  flex-wrap-reverse' >

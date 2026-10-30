@@ -19,7 +19,11 @@ interface WorkflowState {
     onEdgesChange: (changes: EdgeChange[]) => void;
     onConnect: (connection: Connection) => void;
     addNode: (nodeBlueprint: ISidebarNodeSummary) => void;
-    updateNodeValues: (nodeId: string, formValues:Record<string,any>) => void
+    updateNodeValues: (nodeId: string, formValues:Record<string,any>) => void;
+    setNodes:(nodes:Node[])=>void ;
+    setEdges:(edges:Edge[])=>void ;
+
+
 }
 
 export const useWorkflowStore = create<WorkflowState>()(
@@ -72,7 +76,15 @@ export const useWorkflowStore = create<WorkflowState>()(
                         }} : node)
                     }
                 );
-            })
+            }),
+            setNodes: (nodes: Node[]) => set(() => ({
+                nodes: nodes
+            }), false, "setNodes"),
+            
+            setEdges: (edges: Edge[]) => set(() => ({
+                edges: edges
+            }), false, "setEdges"),
+            
         })
     )
 );

@@ -14,6 +14,16 @@ export const useGetAllNodes = ()=>{
     })
 }
 
+export const useFetchWorkflow = (workflowId:string)=>{
+    return useQuery(
+            {
+                queryKey:["workflows",workflowId],
+                queryFn: () => workflowService.fetchWorkflowById(workflowId),
+                enabled:!!workflowId
+            }
+    )
+}
+
 export const useCreateWorkflow = ()=>{
     
     return useMutation({
@@ -24,5 +34,19 @@ export const useCreateWorkflow = ()=>{
           onError: (error: any) => {
                     toast.error(error.message || "Workflow creation failed"); // ❌ Toast here
                   },
+    })
+}
+
+
+export const useExecuteWorkflow = ()=>{
+
+    return useMutation({
+        mutationFn:workflowService.executeWorkflow,
+        onSuccess:(data)=>{
+            toast.success("Executing Workflow..")
+        },
+        onError: (error: any) => {
+                  toast.error(error.message || "Workflow creation failed"); // ❌ Toast here
+                },
     })
 }
