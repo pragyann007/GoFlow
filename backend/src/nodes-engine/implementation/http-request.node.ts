@@ -87,10 +87,16 @@ export class HttpRequestNode implements INodeDefination {
     async execute(nodeParameters: any, incomingData: any[]) {
         const { url, method, authType, bearerToken, basicUser, basicPass, body } = nodeParameters;
         
+        // Guard clause against empty workflow designer fields
+        if (!url) {
+            throw new Error("HTTP Node failed: URL parameter is empty or undefined.");
+        }
+
         const headers: Record<string, string> = {
             "Content-Type": "application/json",
         };
 
+        // 1. Resolve Authorization Mechanisms
         if (authType === "Bearer Token" && bearerToken) {
             headers["Authorization"] = `Bearer ${bearerToken}`;
         } else if (authType === "Basic Auth" && basicUser && basicPass) {
@@ -100,19 +106,32 @@ export class HttpRequestNode implements INodeDefination {
 
         try {
             const options: RequestInit = {
-                method,
+                method: method || "GET",
                 headers,
             };
 
+            // 2. Safely parse and attach outgoing payload body structures
             if (["POST", "PUT", "PATCH"].includes(method) && body) {
                 options.body = typeof body === "string" ? body : JSON.stringify(body);
             }
 
+            // 3. Dispatch outbound network trigger asynchronously
             const response = await fetch(url, options);
+            
+            if (!response.ok) {
+                throw new Error(`Server responded with HTTP Status ${response.status}`);
+            }
+
             const responseData = await response.json();
-            return [responseData];
+            
+            // CRITICAL ENGINE BRIDGE: Return an engine-compliant payload structure
+            return {
+                data: Array.isArray(responseData) ? responseData : [responseData]
+            };
+
         } catch (error: any) {
             throw new Error(`HTTP Node failed: ${error.message}`);
         }
     }
+
 }

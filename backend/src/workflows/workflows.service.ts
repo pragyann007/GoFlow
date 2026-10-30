@@ -98,8 +98,12 @@ export class WorkflowsService {
 
     async executeWorkflow (workflowId:string){
 
+        console.log("step2 ",workflowId)
+
 
         await this.nodeExecuteQuee.add("execute",{workflowId})
+        console.log("step3 ",workflowId)
+
 
         return {"message":"Workflow executing.."}
 

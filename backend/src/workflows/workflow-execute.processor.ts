@@ -7,7 +7,7 @@
     import { Workflows } from "./entities/workflow.entity";
     import { Repository } from "typeorm";
 
-    @Processor("node-executor")
+    @Processor("node-execute")
     export class NodeExecuteProcessor extends WorkerHost{
         private readonly logger  = new Logger(NodeExecuteProcessor.name)
 
@@ -21,6 +21,8 @@
         }
 
         async process(job: Job<any,any,string>,): Promise<any> {
+            console.log("step4 ",job.id,job.data)
+
 
             switch(job.name){
                 case "execute":

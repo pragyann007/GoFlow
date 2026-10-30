@@ -42,8 +42,11 @@ export class WorkflowsController {
   }
 
 
+  @Authentication(AuthType.NONE)
   @Post(":workflowId/execute")
   async execute (@Param("workflowId") workflowId:string){
+
+    console.log("step1 ")
 
     return await this.workflowsService.executeWorkflow(workflowId)
 
