@@ -15,6 +15,7 @@ import ConfigPanel from './ConfigPanel'
 const WorkflowNodesForm = () => {
   const activeNodeId = useWorkflowNodeForm((state) => state.activeNodeId)
   const activeNodeBluePrint = useWorkflowNodeForm((state) => state.activeNodeBluePrint)
+  console.log(activeNodeBluePrint)
   const closeModalForm = useWorkflowNodeForm((state) => state.closeModalForm)
 
   const updateNodeValue = useWorkflowStore((state) => state.updateNodeValues)

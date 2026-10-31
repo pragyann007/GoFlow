@@ -27,6 +27,7 @@ interface NodeConfigFormProps {
 
 const NodeConfigForm: React.FC<NodeConfigFormProps> = ({ properties = [], onSubmit }) => {
   // 1. Generate dynamic schema & default values
+  console.log("Propertis",properties)
 
   const safeProperties = Array.isArray(properties) ? properties : [];
 

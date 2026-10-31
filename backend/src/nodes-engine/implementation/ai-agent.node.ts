@@ -70,8 +70,8 @@ export class AiAgentNode implements INodeDefination {
     async execute(nodeParameters: any, incomingData: any[]) {
         // Metadata / placeholder execution stub
         const {provider,modelName,systemPrompt,temperature,jsonMode,apiKeys} = nodeParameters
+        console.log("syspropt",systemPrompt)
 
-        console.log("my incoming data ",incomingData)
 
         // const modelConfig = PROVIDER_MAP[provider];
 
