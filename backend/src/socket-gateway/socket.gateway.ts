@@ -1,7 +1,9 @@
 import { SubscribeMessage, WebSocketGateway,OnGatewayConnection,OnGatewayDisconnect, WebSocketServer } from '@nestjs/websockets';
 import type {Server,Socket} from "socket.io"
 
-@WebSocketGateway()
+@WebSocketGateway({cors:{
+  origin:"http://localhost:3000"
+}})
 export class SocketGateway implements OnGatewayConnection,OnGatewayDisconnect {
 
   @WebSocketServer()

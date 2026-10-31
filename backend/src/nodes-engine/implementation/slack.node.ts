@@ -38,6 +38,18 @@ export class SlackNode implements INodeDefination {
 
     async execute(nodeParameters: any, incomingData: any[]) {
         console.log("Slack",incomingData)
+        const {webhookUrl,channel,message} = nodeParameters
+
+        if(!webhookUrl){
+            throw new Error("No webhook url provided ")
+        }
+        try {
+            const res = fetch(webhookUrl,{body:{channel,message}})
+            
+        } catch (error) {
+            
+        }
+
         return incomingData;
 
     }

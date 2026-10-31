@@ -30,7 +30,6 @@ const WorkflowNavBar = () => {
 
     const {mutate:execute,isPending:isExecuting} = useExecuteWorkflow()
     const saveWorkflow = ()=>{
-        alert("hiiiii node ready vo ki k hoo")
         if(!params.workflowId) return
         const workflowData = {
             workflowId:Array.isArray(params.workflowId) ? params.workflowId[0] : params.workflowId,
@@ -41,8 +40,9 @@ const WorkflowNavBar = () => {
 
     }
     const executeWorkflow = ()=>{
-        alert("hiiiii node ready vo ki k hoo")
         if(!params.workflowId) return
+
+
 
         const workflowId = Array.isArray(params.workflowId) ? params.workflowId[0] : params.workflowId
         execute(workflowId)

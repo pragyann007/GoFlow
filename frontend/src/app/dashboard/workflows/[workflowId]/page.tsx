@@ -12,6 +12,7 @@ import WorkflowNodesForm from '@/components/feature/workflows/WorkflowNodesForm'
 import { useParams } from 'next/navigation';
 import { useFetchWorkflow } from '@/hooks/useWorkflows';
 import { Spinner } from '@/components/ui/spinner';
+import useWorkflowSocket from '@/hooks/useWorkflowSocket';
 
 const nodeTypes = {
   custom:WorkflowNodeUi
@@ -89,6 +90,8 @@ const page = () => {
     if(!workflowId){
       return ; 
     }
+
+    useWorkflowSocket(workflowId)
 
     const {data,isLoading} = useFetchWorkflow(workflowId)
 
