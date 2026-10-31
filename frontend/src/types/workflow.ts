@@ -1,6 +1,5 @@
 import type { Edge, Node as XYNode } from "@xyflow/react"
 
-// The lightweight object sent to populate the sidebar quickly
 export interface IFNodeProperty {
     displayName: string
     name: string
@@ -25,10 +24,8 @@ export interface ISidebarNodeSummary {
     properties: IFNodeProperty[]
 }
 
-// 👇 NEW: This safely wraps the real values matching what the user typed in the form
 export type NodeParameterValues = Record<string, any>;
 
-// 👇 NEW: Extend your node schema to support static blueprints AND live user parameter entries
 export interface IWorkflowNodeData extends ISidebarNodeSummary {
     values?: NodeParameterValues; 
     status?: "IDLE" | "RUNNING" | "COMPLETED" | "FAILED" | "SKIPPED";
@@ -36,14 +33,11 @@ export interface IWorkflowNodeData extends ISidebarNodeSummary {
     [key: string]: unknown; // Add index signature to satisfy Record<string, unknown>
 }
 
-// 👇 NEW: Strongly type the actual nodes structure sitting inside your Zustand canvas state
 
-// Your unified core creation payload contract
 export interface IWorkflowCreation {
     id: string
     name: string
     active: boolean
-    // 👇 FIX: Changed from 'node' (singular) to 'nodes' (plural) matching your normalization function array
     nodes: Node[] 
     connections: {
         edges: Edge[]

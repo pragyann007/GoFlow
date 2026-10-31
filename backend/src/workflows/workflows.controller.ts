@@ -64,6 +64,7 @@ export class WorkflowsController {
 
   @Post("execute/node")
   async executeOneNode(@Body() nodeData ){
+    console.log("000No0000",nodeData)
 
     return await this.workflowsService.execteNode(nodeData)
 

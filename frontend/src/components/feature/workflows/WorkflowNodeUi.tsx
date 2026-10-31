@@ -1,7 +1,7 @@
 import { Handle, Position } from '@xyflow/react'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import DynamicIcon from '../common/DynamicIcon'
-import { Play, Settings } from 'lucide-react'
+import { DatabaseArrowDownIcon, Play, Settings } from 'lucide-react'
 import ListNodeSheet from './ListNodeSheet'
 import { useWorkflowNodeForm } from '@/store/useWorkflowNodeForm'
 import { ISidebarNodeSummary } from '@/types/workflow'
@@ -15,8 +15,33 @@ interface ReactFlowProps {
 
 const WorkflowNodeUi = ({id,data}:ReactFlowProps) => {
     const {openFormPanel} = useWorkflowNodeForm()
-    const {mutate:executeNode,isPending,isError,data:nodeData} = useExecuteNode(data)
+    const nodeOutputs = useWorkflowStore((state)=>state.nodeOutputs);
+
+
+    const edges = useWorkflowStore((state)=>state.edges);
+    
+    const getIncomingData = ()=>{
+        const sources = edges.filter((e)=>e.target == id)
+
+        const incomingDatas:any[] = []
+        for(const s of sources){
+            
+            let output = nodeOutputs[s.source]    
+            if (output){
+                incomingDatas.push(output)
+
+            }
+
+        }
+        return incomingDatas
+    }
+    const currentIncomingDatas = getIncomingData()
+    const {mutate:executeNode,isPending,isError,data:nodeData} = useExecuteNode(data,currentIncomingDatas)
+
+
     const setNodeOutput = useWorkflowStore((state)=>state.setNodeOutputs);
+
+    console.log("DATATA",data,id)
     const displayForm = () => {
     
         const {properties,...metadata} = data

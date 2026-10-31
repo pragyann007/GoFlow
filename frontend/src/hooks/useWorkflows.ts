@@ -52,11 +52,11 @@ export const useExecuteWorkflow = ()=>{
 }
 
 
-export const useExecuteNode=(nodeData:Record<string,any>)=>{
+export const useExecuteNode=(nodeData:Record<string,any>,incomingDatas:any)=>{
 
     return useMutation(
         {
-            mutationFn: () => workflowService.executeNode(nodeData),
+            mutationFn: () => workflowService.executeNode(nodeData,incomingDatas),
             onSuccess:()=>{
                 toast.success("Node executed sucessfully")
             },

@@ -14,12 +14,13 @@ import { SlackNode } from "./implementation/slack.node";
 import { GmailNode } from "./implementation/gmail.node";
 import { BullModule } from "@nestjs/bullmq";
 import { NodeExecuteProvider } from "./node-executor.provider";
+import { AiProviderRegistry } from "./implementation/AiProviderRegistry";
 
 
 @Module({
   imports: [DiscoveryModule],
   controllers: [],
-  providers: [NodeRegistry,HttpRequestNode,WebHookNode,AiAgentNode,CodeNode,NotificationNode,ScheduleTriggerNode,SwitchNode ,DiscordNode,SlackNode,GmailNode,NodeExecuteProvider/*, ...more nodes */],
+  providers: [NodeRegistry,HttpRequestNode,WebHookNode,AiAgentNode,CodeNode,NotificationNode,ScheduleTriggerNode,SwitchNode ,DiscordNode,SlackNode,GmailNode,NodeExecuteProvider,AiProviderRegistry/*, ...more nodes */],
   exports:[NodeRegistry,NodeExecuteProvider]
 })
 export class NodeModule {}

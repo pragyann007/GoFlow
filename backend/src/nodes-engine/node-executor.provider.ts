@@ -10,7 +10,7 @@ export class NodeExecuteProvider {
 
     constructor(private readonly nodeRegistryService: NodeRegistry) { }
 
-    private resolvedParameters(parameters: Record<string, any>, incomingData: any[]): Record<string, any> {
+    public resolvedParameters(parameters: Record<string, any>, incomingData: any[]): Record<string, any> {
         const resolvedParams = _.cloneDeep(parameters)
 
         const replaceExpression = (value: any): any => {

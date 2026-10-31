@@ -124,14 +124,20 @@ export class WorkflowsService {
     }
 
 
-   async execteNode(data){
-    console.log("hu",data.type,data.values,[])
-
-    const res = await this.nodeProvider.executeActualNodeLogic(data.type,data.values,[])
-
-    console.log("RES aayo hai taa",res)
-    return res ; 
-        
-
+    async execteNode(data) {
+        console.log("hu", data.nodeData.type, data.nodeData.values, data.incomingDatas);
+    
+        // 1. Dynamically resolve any {{tags}} using the incomingData sent from the frontend
+        const resolvedValues = this.nodeProvider.resolvedParameters(data.nodeData.values, data.incomingDatas);
+    
+        // 2. Execute the node logic using the resolved parameter values
+        const res = await this.nodeProvider.executeActualNodeLogic(
+            data.nodeData.type, 
+            resolvedValues, 
+            data.incomingDatas
+        );
+    
+        console.log("RES aayo hai taa", res);
+        return res;
     }
 }
