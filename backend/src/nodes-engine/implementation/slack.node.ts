@@ -37,20 +37,39 @@ export class SlackNode implements INodeDefination {
     ];
 
     async execute(nodeParameters: any, incomingData: any[]) {
-        console.log("Slack",incomingData)
-        const {webhookUrl,channel,message} = nodeParameters
+        console.log("Slack incoming data:", incomingData);
+        const { webhookUrl, channel, message } = nodeParameters;
 
-        if(!webhookUrl){
-            throw new Error("No webhook url provided ")
+        if (!webhookUrl) {
+            throw new Error("No webhook URL provided for Slack node.");
         }
+
         try {
-            const res = fetch(webhookUrl,{body:{channel,message}})
+            const response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    channel: channel,
+                    text: message, 
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Slack API error: ${response.status} - ${errorText}`);
+            }
+
+            const responseData = await response.text(); 
             
-        } catch (error) {
-            
+            return {
+                data: [{ success: true, response: responseData }]
+            };
+
+        } catch (error: any) {
+            console.error("Slack node execution failed:", error);
+            throw new Error(`Slack execution failed: ${error.message}`);
         }
-
-        return incomingData;
-
     }
 }
