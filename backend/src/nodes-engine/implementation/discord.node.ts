@@ -37,7 +37,40 @@ export class DiscordNode implements INodeDefination {
     ];
 
     async execute(nodeParameters: any, incomingData: any[]) {
-        console.log("Discord",incomingData)
-        return incomingData;
+        console.log("Discord incoming data:", incomingData);
+        const { webhookUrl, username, content } = nodeParameters;
+
+        if (!webhookUrl) {
+            throw new Error("No webhook URL provided for Discord node.");
+        }
+
+        try {
+            const response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    content: content,
+                    username: username || "GoFlow Bot",
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Discord API error: ${response.status} - ${errorText}`);
+            }
+
+            // Discord webhooks return a 204 No Content status on success
+            const responseData = response.status === 204 ? { status: "OK" } : await response.json();
+
+            return {
+                data: [{ success: true, response: responseData }]
+            };
+
+        } catch (error: any) {
+            console.error("Discord node execution failed:", error);
+            throw new Error(`Discord execution failed: ${error.message}`);
+        }
     }
 }
