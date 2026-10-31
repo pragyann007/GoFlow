@@ -15,6 +15,8 @@ import { WorkflowsModule } from './workflows/workflows.module';
 import { NodeModule } from './nodes-engine/node.module';
 import { BullModule } from "@nestjs/bullmq"
 
+import { SocketGatewayModule } from './socket-gateway/socket-gateway.module';
+
 @Module({
   imports: [ConfigModule.forRoot({isGlobal:true}),TypeOrmModule.forRootAsync({
     inject:[ConfigService],
@@ -40,11 +42,11 @@ import { BullModule } from "@nestjs/bullmq"
         password: configService.get("REDIS_PASSWORD"),
       },
     })
-  }),AuthenticationModule, UsersModule, RedisModule, WorkflowsModule,NodeModule],
+  }),AuthenticationModule, UsersModule, RedisModule, WorkflowsModule,NodeModule, SocketGatewayModule],
   controllers: [AppController],
   providers: [AppService,{
     provide:APP_GUARD,
     useClass:AuthenticationGuard
-  },AccessTokenGuard,JwtProvider,JwtService],
+  },AccessTokenGuard,JwtProvider,JwtService, ],
 })
 export class AppModule {}

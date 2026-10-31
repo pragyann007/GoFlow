@@ -4,11 +4,16 @@ import { NodeRegistry } from "./node.registry.service";
 import * as _ from "lodash"
 import { match } from "assert";
 import { da } from "zod/v4/locales";
+import { SocketGateway } from "src/socket-gateway/socket.gateway";
+import { STATUS } from "./interfaces/socket";
+import { EVENT_OUTPUT, EVENT_STATUS } from "./constants/socket";
 
 @Injectable()
 export class NodeExecuteProvider {
 
-    constructor(private readonly nodeRegistryService: NodeRegistry) { }
+    constructor(private readonly nodeRegistryService: NodeRegistry,
+        private readonly socketGateway:SocketGateway
+    ) { }
 
     public resolvedParameters(parameters: Record<string, any>, incomingData: any[]): Record<string, any> {
         const resolvedParams = _.cloneDeep(parameters)
@@ -106,8 +111,9 @@ export class NodeExecuteProvider {
         return { order, dependencies };
     }
 
-    private emitSocketUpdate(executionId: string, nodeName: string, status: string, data?: any) {
-        console.log(`[Socket] Execution: ${executionId} | Node: ${nodeName} -> ${status}`, data ?? '');
+    private emitSocketUpdate(workflowId: string, eventName: string, data?: any) {
+        this.socketGateway.emitToUserRoom(workflowId, eventName, data);
+        console.log(`[Socket] Room: ${workflowId} | Event: ${eventName} ->`, data ?? '');
     }
 
     /**
@@ -197,16 +203,17 @@ export class NodeExecuteProvider {
                 const nodeType = standaloneNode.data.type;
                 const parametricType = standaloneNode.data.values || {};
 
-                this.emitSocketUpdate(executionId, standaloneNode.id, "RUNNING");
+                this.emitSocketUpdate(workflow.id,EVENT_STATUS,{status:STATUS.RUNNING,node:nodeType});
 
                 const result = await this.executeActualNodeLogic(nodeType, parametricType, []);
 
-                this.emitSocketUpdate(executionId, standaloneNode.id, "COMPLETED", result.data);
+                this.emitSocketUpdate(workflow.id,EVENT_STATUS,{status:STATUS.SUCCESS,node:nodeType});
+                this.emitSocketUpdate(workflow.id,EVENT_OUTPUT,result)
                 console.log("Standalone Execution Result:", result);
                 return; // Stop here since there are no paths to traverse
             } catch (error: any) {
                 console.error("Standalone Fallback Execution Failed:", error);
-                this.emitSocketUpdate(executionId, workflow.nodes[0].id, "FAILED", error.message);
+                this.emitSocketUpdate(workflow.id,EVENT_STATUS,{status:STATUS.FAILED});
                 return;
             }
         }
@@ -243,12 +250,19 @@ export class NodeExecuteProvider {
                     for (const child of children) {
                         skippedNodes.add(child);
                     }
-                    this.emitSocketUpdate(executionId, nodeName, "SKIPPED");
+                    this.emitSocketUpdate(workflow.id, EVENT_STATUS, { 
+                        status: STATUS.SKIPPED, 
+                        nodeId: nodeName 
+                    });
                     await checkAndTriggerNextTasks();
                     return;
                 }
 
-                this.emitSocketUpdate(executionId, nodeName, "RUNNING");
+                // Emit RUNNING status
+                this.emitSocketUpdate(workflow.id, EVENT_STATUS, { 
+                    status: STATUS.RUNNING, 
+                    nodeId: nodeName 
+                });
 
                 try {
                     const targetNodeConfig = workflow.nodes.find(d => d.id === nodeName);
@@ -259,20 +273,27 @@ export class NodeExecuteProvider {
                     const nodeType = targetNodeConfig.data.type;
                     const rawparameterValues = targetNodeConfig.data.values || {};
 
-                    // console.log('PARAMETER VALUE LOOKUP:', parameterValues, 'Node ID:', nodeName, 'Type:', nodeType);
-
-                    // Inside your executor function:
                     const ancestorIds = this.getAllAncestorIds(nodeName, workflow.connections.edges);
-
-                    // Collect outputs from ALL upstream nodes (HTTP Request, AI Agent, etc.)
-                    const incomingData = ancestorIds.map(ancestorId => nodeOutputs[ancestorId]).filter(Boolean); const parameterValues = this.resolvedParameters(rawparameterValues, incomingData)
+                    const incomingData = ancestorIds.map(ancestorId => nodeOutputs[ancestorId]).filter(Boolean); 
+                    
+                    const parameterValues = this.resolvedParameters(rawparameterValues, incomingData);
 
                     const result = await this.executeActualNodeLogic(nodeType, parameterValues, incomingData);
 
                     nodeOutputs[nodeName] = result.data;
                     completedNodes.add(nodeName);
 
-                    this.emitSocketUpdate(executionId, nodeName, "COMPLETED", result.data);
+                    // Emit SUCCESS status and output payload
+                    this.emitSocketUpdate(workflow.id, EVENT_STATUS, { 
+                        status: STATUS.SUCCESS, 
+                        nodeId: nodeName,
+                        nodeType 
+                    });
+                    
+                    this.emitSocketUpdate(workflow.id, EVENT_OUTPUT, {
+                        nodeId: nodeName,
+                        output: result.data
+                    });
 
                     if (result.isIfNode) {
                         const deadBranchTarget = result.conditionPassed ? result.falseBranchTarget : result.trueBranchTarget;
@@ -280,7 +301,11 @@ export class NodeExecuteProvider {
                     }
 
                 } catch (error: any) {
-                    this.emitSocketUpdate(executionId, nodeName, "FAILED", error.message);
+                    this.emitSocketUpdate(workflow.id, EVENT_STATUS, { 
+                        status: STATUS.FAILED,
+                        nodeId: nodeName,
+                        error: error.message 
+                    });
                     return;
                 } finally {
                     executingNodes.delete(nodeName);

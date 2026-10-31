@@ -15,10 +15,11 @@ import { GmailNode } from "./implementation/gmail.node";
 import { BullModule } from "@nestjs/bullmq";
 import { NodeExecuteProvider } from "./node-executor.provider";
 import { AiProviderRegistry } from "./implementation/AiProviderRegistry";
+import { SocketGatewayModule } from "src/socket-gateway/socket-gateway.module";
 
 
 @Module({
-  imports: [DiscoveryModule],
+  imports: [DiscoveryModule,SocketGatewayModule],
   controllers: [],
   providers: [NodeRegistry,HttpRequestNode,WebHookNode,AiAgentNode,CodeNode,NotificationNode,ScheduleTriggerNode,SwitchNode ,DiscordNode,SlackNode,GmailNode,NodeExecuteProvider,AiProviderRegistry/*, ...more nodes */],
   exports:[NodeRegistry,NodeExecuteProvider]
