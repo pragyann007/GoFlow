@@ -37,6 +37,7 @@ export class DiscordNode implements INodeDefination {
     ];
 
     async execute(nodeParameters: any, incomingData: any[]) {
+        console.log("Discord",incomingData)
         return incomingData;
     }
 }

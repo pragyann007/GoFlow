@@ -73,7 +73,7 @@ export class NodeExecuteProvider {
     /**
      * Executes the matching node definition class from your dynamic NestJS service registry.
      */
-    private async executeActualNodeLogic(
+     async executeActualNodeLogic(
         nodeType: string,
         parameterValues: Record<string, any>,
         incomingData: any[]
@@ -110,7 +110,6 @@ export class NodeExecuteProvider {
      */
       async executor(workflow: Workflows) {
         console.log("Starting parallel execution engine sequence...");
-        console.log(workflow);
 
         // Safety verification in case the workflow layout is entirely empty
         if (!workflow.nodes || workflow.nodes.length === 0) {
@@ -193,7 +192,7 @@ export class NodeExecuteProvider {
                     const nodeType = targetNodeConfig.data.type;
                     const parameterValues = targetNodeConfig.data.values || {};
                     
-                    console.log('PARAMETER VALUE LOOKUP:', parameterValues, 'Node ID:', nodeName, 'Type:', nodeType);
+                    // console.log('PARAMETER VALUE LOOKUP:', parameterValues, 'Node ID:', nodeName, 'Type:', nodeType);
                     
                     const incomingData = (dependencies[nodeName] || []).map(p => nodeOutputs[p]);
                     const result = await this.executeActualNodeLogic(nodeType, parameterValues, incomingData);

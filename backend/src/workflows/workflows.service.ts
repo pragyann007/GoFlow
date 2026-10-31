@@ -5,6 +5,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateWorkflowDTO, WorkflowDTO } from './dtos/createWorkflow.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { NodeRegistry } from 'src/nodes-engine/node.registry.service';
+import { NodeExecuteProvider } from 'src/nodes-engine/node-executor.provider';
 
 @Injectable()
 export class WorkflowsService {
@@ -13,8 +15,10 @@ export class WorkflowsService {
     constructor(
         @InjectRepository(Workflows)
         private readonly workflowRepisitories:Repository<Workflows>,
+    private readonly registry:NodeRegistry,
 
-        @InjectQueue("node-execute") private readonly nodeExecuteQuee:Queue
+        @InjectQueue("node-execute") private readonly nodeExecuteQuee:Queue,
+        private readonly nodeProvider:NodeExecuteProvider
     ){}
 
     async create(createWorkflowDTO:CreateWorkflowDTO){
@@ -96,6 +100,12 @@ export class WorkflowsService {
 
     }
 
+
+    async getALlNodes(){
+        return this.registry.listAllNodes()
+
+
+    }
     async executeWorkflow (workflowId:string){
 
         console.log("step2 ",workflowId)
@@ -110,6 +120,18 @@ export class WorkflowsService {
 
 
 
+
+    }
+
+
+   async execteNode(data){
+    console.log("hu",data.type,data.values,[])
+
+    const res = await this.nodeProvider.executeActualNodeLogic(data.type,data.values,[])
+
+    console.log("RES aayo hai taa",res)
+    return res ; 
+        
 
     }
 }

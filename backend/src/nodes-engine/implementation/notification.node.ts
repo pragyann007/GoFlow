@@ -54,6 +54,7 @@ export class NotificationNode implements INodeDefination {
     ];
 
     async execute(nodeParameters: any, incomingData: any[]) {
+        console.log("NOtiffication",incomingData)
         return incomingData;
     }
 }

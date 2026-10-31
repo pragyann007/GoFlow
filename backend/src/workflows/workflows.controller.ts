@@ -14,7 +14,7 @@ export class WorkflowsController {
   @Authentication(AuthType.NONE)
   @Get("nodes")
   nodeTypes(){
-    return this.registry.listAllNodes()
+    return this.workflowsService.getALlNodes()
 
   }
 
@@ -57,5 +57,15 @@ export class WorkflowsController {
   async getAll(@Req() req:Request){
     console.log("get all called..",req.headers.authorization)
     return this.workflowsService.getAll()
+  }
+
+
+  @Authentication(AuthType.NONE)
+
+  @Post("execute/node")
+  async executeOneNode(@Body() nodeData ){
+
+    return await this.workflowsService.execteNode(nodeData)
+
   }
 }

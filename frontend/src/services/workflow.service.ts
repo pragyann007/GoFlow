@@ -30,6 +30,11 @@ export const workflowService = {
     async executeWorkflow(workflowId:string){
         const {data} = await api.post(`/workflows/${workflowId}/execute`);
         return data 
+    },
+    async executeNode(nodeData:Record<string,any>){
+        const {data} = await api.post("/workflows/execute/node",nodeData)
+        return data ; 
+
     }
 
 }

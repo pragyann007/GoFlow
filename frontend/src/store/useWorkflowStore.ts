@@ -22,6 +22,8 @@ interface WorkflowState {
     updateNodeValues: (nodeId: string, formValues:Record<string,any>) => void;
     setNodes:(nodes:Node[])=>void ;
     setEdges:(edges:Edge[])=>void ;
+    nodeOutputs:Record<string,any>;
+    setNodeOutputs:(nodeId:string,output:any)=>void;
 
 
 }
@@ -31,6 +33,7 @@ export const useWorkflowStore = create<WorkflowState>()(
         (set) => ({
             nodes: [],
             edges: [],
+            nodeOutputs:{},
 
             onNodesChange: (changes: NodeChange[]) =>
                 set((state) => ({
@@ -84,7 +87,13 @@ export const useWorkflowStore = create<WorkflowState>()(
             setEdges: (edges: Edge[]) => set(() => ({
                 edges: edges
             }), false, "setEdges"),
-            
+            setNodeOutputs:(nodeId:string,output:any)=>set((state)=>({
+                nodeOutputs:{
+                    ...state.nodeOutputs,[nodeId]:output
+                }
+            }))            
+
         })
-    )
+    ),
+
 );

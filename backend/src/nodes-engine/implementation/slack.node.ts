@@ -37,6 +37,8 @@ export class SlackNode implements INodeDefination {
     ];
 
     async execute(nodeParameters: any, incomingData: any[]) {
+        console.log("Slack",incomingData)
         return incomingData;
+
     }
 }

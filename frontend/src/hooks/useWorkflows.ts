@@ -50,3 +50,20 @@ export const useExecuteWorkflow = ()=>{
                 },
     })
 }
+
+
+export const useExecuteNode=(nodeData:Record<string,any>)=>{
+
+    return useMutation(
+        {
+            mutationFn: () => workflowService.executeNode(nodeData),
+            onSuccess:()=>{
+                toast.success("Node executed sucessfully")
+            },
+            onError: (error: any) => {
+                toast.error(error.message || "Workflow creation failed"); // ❌ Toast here
+              },
+
+        }
+    )
+}

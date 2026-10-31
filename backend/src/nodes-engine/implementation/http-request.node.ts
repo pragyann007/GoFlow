@@ -86,6 +86,7 @@ export class HttpRequestNode implements INodeDefination {
 
     async execute(nodeParameters: any, incomingData: any[]) {
         const { url, method, authType, bearerToken, basicUser, basicPass, body } = nodeParameters;
+        console.log(nodeParameters)
         
         // Guard clause against empty workflow designer fields
         if (!url) {
