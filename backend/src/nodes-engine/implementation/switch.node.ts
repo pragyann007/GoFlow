@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { INodeDefination, INodeProperty } from "../interfaces/node-registry.interface";
 import { Node } from "../decorators/node.decorator";
+import { cond } from "lodash";
 
 @Injectable()
 @Node()
@@ -14,29 +15,63 @@ export class SwitchNode implements INodeDefination {
 
     properties: INodeProperty[] = [
         {
-            displayName: "Data Type to Check",
-            name: "dataType",
-            type: "options",
-            options: ["String", "Number", "Boolean"],
-            default: "String"
-        },
-        {
-            displayName: "Value 1 (Route 1 Condition)",
+            displayName: "Condition 1 (Expression)",
             name: "condition1",
             type: "string",
-            placeholder: "status === 'success'",
+            placeholder: "e.g. status === 'success' or userId == 1",
             default: ""
         },
         {
-            displayName: "Value 2 (Route 2 Condition)",
-            name: "condition2",
+            displayName: "True Branch Target Node ID",
+            name: "trueBranchTarget",
             type: "string",
-            placeholder: "status === 'failed'",
+            placeholder: "Target node ID if condition matches",
+            default: ""
+        },
+        {
+            displayName: "False Branch Target Node ID",
+            name: "falseBranchTarget",
+            type: "string",
+            placeholder: "Target node ID if condition fails",
             default: ""
         }
     ];
 
     async execute(nodeParameters: any, incomingData: any[]) {
-        return incomingData;
+
+        const {condition1,trueBranchTarget,falseBranchTarget} = nodeParameters
+
+        console.log("Switch Node evaluating condition:", condition1, "with incoming data:", incomingData);        
+
+        let conditionPassed = false
+
+        if(condition1 && incomingData.length > 0){
+            try {
+                const targetedObj = Array.isArray(incomingData[0]) ? incomingData[0][0] : incomingData[0];
+                
+                const evaluate = new Function('$json', `try { return !!(${condition1}); } catch(e) { return false; }`);
+
+                conditionPassed = evaluate(targetedObj);
+
+                
+            } catch (err) {
+                console.error("Switch node condition evaluation error:", err);
+                conditionPassed = false;    
+                
+            }
+
+
+        }
+        console.log(`Switch condition result: ${conditionPassed}`);
+
+        return {
+            data: [{ conditionPassed, evaluatedAt: Date.now() }],
+            isIfNode: true,
+            conditionPassed,
+            trueBranchTarget: trueBranchTarget || undefined,
+            falseBranchTarget: falseBranchTarget || undefined
+        };
+
+
     }
 }

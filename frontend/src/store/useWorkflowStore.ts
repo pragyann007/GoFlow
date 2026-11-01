@@ -26,6 +26,7 @@ interface WorkflowState {
     setNodeOutputs:(nodeId:string,output:any)=>void;
     nodeStatus:Record<string,any>;
     setNodeStatus:(nodeName:string,status:string)=>void ; 
+    resetExecutionState: ()=>void;
 
 
 }
@@ -99,7 +100,11 @@ export const useWorkflowStore = create<WorkflowState>()(
                 nodeStatus:{
                     ...state.nodeStatus,[nodeName]:status
                 }
-            }))
+            })),
+            resetExecutionState: () => set({ 
+                nodeStatus: {}, 
+                nodeOutputs: {} 
+            }),
 
         })
     ),

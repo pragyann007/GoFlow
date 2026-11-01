@@ -11,6 +11,8 @@ export class NotificationNode implements INodeDefination {
     icon = "Bell";
     inputs = 1;
     outputs = 1;
+    comingSoon=true
+
 
     properties: INodeProperty[] = [
         {

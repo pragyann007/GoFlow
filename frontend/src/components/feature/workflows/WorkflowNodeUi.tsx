@@ -24,7 +24,7 @@ const WorkflowNodeUi = ({ id, data }: ReactFlowProps) => {
     const isSuccess = status === 'SUCCESS' || status === 'success';
     const isFailed = status === 'FAILED' || status === 'failed';   
 
-    const edges = useWorkflowStore((state) => state.edges);
+    const edges = useWorkflowStore((state) => state.edges) || [];
     
     const getIncomingData = () => {
         const sources = edges.filter((e) => e.target == id)

@@ -94,6 +94,7 @@ const page = () => {
     useWorkflowSocket(workflowId)
 
     const {data,isLoading} = useFetchWorkflow(workflowId)
+    console.log("PAG",data)
 
     useEffect(()=>{
 

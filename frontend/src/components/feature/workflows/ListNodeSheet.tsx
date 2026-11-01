@@ -55,7 +55,7 @@ const ListNodeSheet = ({ children }: { children: React.ReactNode }) => {
                         <div className="flex flex-col gap-5 justify-center p-6" >
                             {
                                 nodes?.map((node) => {
-                                    const {name,icon,description} = node
+                                    const {name,icon,description,comingSoon} = node
                                     return (
                                         <NodeSummaryCard 
                                             key={node.name} 
@@ -63,6 +63,7 @@ const ListNodeSheet = ({ children }: { children: React.ReactNode }) => {
                                             name={name} 
                                             icon={icon} 
                                             description={description} 
+                                            comingSoon={comingSoon}
                                         />
                                     )
                                 })

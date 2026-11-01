@@ -192,6 +192,8 @@ export class NodeExecuteProvider {
 
         const edges = workflow.connections?.edges || [];
         const executionId = `exec_${Date.now()}`;
+        this.emitSocketUpdate(workflow.id, 'workflow-reset', { executionId });
+
 
         // =================================================================
         // YOUR FALLBACK LOGIC: If there are no edges, execute the standalone node directly!
@@ -238,23 +240,24 @@ export class NodeExecuteProvider {
             const nodeOutputs: Record<string, any> = {};
 
             const isReadyToExecute = (nodeName: string): boolean => {
+                if (skippedNodes.has(nodeName)) return false;
                 const parents = dependencies[nodeName] || [];
+                // If any parent was skipped, this child must also be skipped!
+                if (parents.some(parent => skippedNodes.has(parent))) {
+                    skippedNodes.add(nodeName);
+                    return false;
+                }
                 return parents.every(parent => completedNodes.has(parent) || skippedNodes.has(parent));
             };
-
             const processNode = async (nodeName: string): Promise<void> => {
-                if (completedNodes.has(nodeName) || skippedNodes.has(nodeName)) return;
+                if (completedNodes.has(nodeName)) return;
 
+                // If this node was marked as skipped, emit status and exit
                 if (skippedNodes.has(nodeName)) {
-                    const children = order.filter(child => (dependencies[child] || []).includes(nodeName));
-                    for (const child of children) {
-                        skippedNodes.add(child);
-                    }
                     this.emitSocketUpdate(workflow.id, EVENT_STATUS, { 
                         status: STATUS.SKIPPED, 
                         nodeId: nodeName 
                     });
-                    await checkAndTriggerNextTasks();
                     return;
                 }
 
@@ -283,6 +286,15 @@ export class NodeExecuteProvider {
                     nodeOutputs[nodeName] = result.data;
                     completedNodes.add(nodeName);
 
+                    // If it's a Switch/If node, immediately identify and prune the dead branch target
+                    if (result.isIfNode) {
+                        const deadBranchTarget = result.conditionPassed ? result.falseBranchTarget : result.trueBranchTarget;
+                        if (deadBranchTarget) {
+                            skippedNodes.add(deadBranchTarget);
+                            console.log(`[Switch Router] Condition passed: ${result.conditionPassed}. Pruning dead branch node ID: ${deadBranchTarget}`);
+                        }
+                    }
+
                     // Emit SUCCESS status and output payload
                     this.emitSocketUpdate(workflow.id, EVENT_STATUS, { 
                         status: STATUS.SUCCESS, 
@@ -294,11 +306,6 @@ export class NodeExecuteProvider {
                         nodeId: nodeName,
                         output: result.data
                     });
-
-                    if (result.isIfNode) {
-                        const deadBranchTarget = result.conditionPassed ? result.falseBranchTarget : result.trueBranchTarget;
-                        if (deadBranchTarget) skippedNodes.add(deadBranchTarget);
-                    }
 
                 } catch (error: any) {
                     this.emitSocketUpdate(workflow.id, EVENT_STATUS, { 
@@ -313,7 +320,6 @@ export class NodeExecuteProvider {
 
                 await checkAndTriggerNextTasks();
             };
-
             const checkAndTriggerNextTasks = async (): Promise<void> => {
                 const nextTasks: Promise<void>[] = [];
                 for (const node of order) {

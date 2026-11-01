@@ -11,6 +11,8 @@ export class GmailNode implements INodeDefination {
     icon = "Mail";
     inputs = 1;
     outputs = 1;
+    comingSoon=true
+
 
     properties: INodeProperty[] = [
         {

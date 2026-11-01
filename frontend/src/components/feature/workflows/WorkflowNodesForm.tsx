@@ -15,13 +15,16 @@ import ConfigPanel from './ConfigPanel'
 const WorkflowNodesForm = () => {
   const activeNodeId = useWorkflowNodeForm((state) => state.activeNodeId)
   const activeNodeBluePrint = useWorkflowNodeForm((state) => state.activeNodeBluePrint)
-  console.log(activeNodeBluePrint)
   const closeModalForm = useWorkflowNodeForm((state) => state.closeModalForm)
 
   const updateNodeValue = useWorkflowStore((state) => state.updateNodeValues)
   const nodes = useWorkflowStore((state) => state.nodes)
 
   const activeNode = nodes.find((n) => n.id === activeNodeId)
+  console.log("amactive",activeNode)
+
+  if(!activeNode) return 
+
   const nodeLabel =
     (activeNode?.data?.name as string) || (activeNode?.data?.type as string) || 'Node'
   const nodeType = (activeNode?.data?.type as string) || undefined
@@ -70,6 +73,7 @@ const WorkflowNodesForm = () => {
               activeNodeId={activeNodeId}
               properties={activeNodeBluePrint ?? []}
               onSubmit={handleSubmit}
+              activeNodeDatas={activeNode}
             />
           )}
         </div>

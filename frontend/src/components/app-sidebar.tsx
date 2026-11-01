@@ -20,7 +20,6 @@ export function AppSidebar() {
   const pathname = usePathname()
 
   const navigationItems = [
-    { href: "/dashboard/home", title: "Home", icon: Home },
     { href: "/dashboard/workflows", title: "Workflows", icon: Network },
   ]
 

@@ -9,9 +9,11 @@ interface ConfigPanelProps {
   properties?: any[]
   onSubmit: (data: any) => void
   activeNodeId: string
+  activeNodeDatas:Record<string,any>
 }
 
-const ConfigPanel: React.FC<ConfigPanelProps> = ({ activeNodeId, properties = [], onSubmit }) => {
+const ConfigPanel: React.FC<ConfigPanelProps> = ({ activeNodeId, properties = [], onSubmit ,activeNodeDatas}) => {
+  console.log("CONFIG panel",activeNodeDatas.data.values)
   return (
     <div className="grid h-full min-h-0 w-full grid-cols-1 lg:grid-cols-[minmax(260px,3fr)_minmax(380px,4fr)_minmax(260px,3fr)]">
       {/* Input */}
@@ -35,7 +37,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ activeNodeId, properties = []
         />
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           <div className="mx-auto w-full max-w-xl">
-            <NodeConfigForm properties={properties} onSubmit={onSubmit} />
+            <NodeConfigForm properties={properties} defaultValuesNode={activeNodeDatas.data.values} onSubmit={onSubmit} />
           </div>
         </div>
       </main>

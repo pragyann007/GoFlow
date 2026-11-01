@@ -1,9 +1,6 @@
-import React from 'react'
+import { redirect } from "next/navigation";
 
-const page = () => {
-  return (
-    <div>page</div>
-  )
+export default function DashboardRootPage() {
+    // Instantly redirects anyone visiting /dashboard to your workflows page
+    redirect("/dashboard/workflows"); // Make sure this matches your actual workflows route!
 }
-
-export default page

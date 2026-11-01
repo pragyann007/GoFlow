@@ -11,6 +11,7 @@ export class CodeNode implements INodeDefination {
     icon = "Code";
     inputs = 1;
     outputs = 1;
+    comingSoon?=true
 
     properties: INodeProperty[] = [
         {

@@ -11,6 +11,8 @@ export class ScheduleTriggerNode implements INodeDefination {
     icon = "Clock";
     inputs = 0;
     outputs = 1;
+    comingSoon=true
+
 
     properties: INodeProperty[] = [
         {

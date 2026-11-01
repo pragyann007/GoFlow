@@ -21,6 +21,7 @@ export interface INodeDefination{
     inputs:number
     outputs:number
     properties:INodeProperty[]
+    comingSoon?:boolean
 
     execute(nodeParamters:any,incomingData:any[]):Promise<any>;
 

@@ -23,9 +23,10 @@ import { cn } from "@/lib/utils";
 interface NodeConfigFormProps {
   properties: IFNodeProperty[];
   onSubmit?: (data: any) => void;
+  defaultValuesNode?:Record<string,any>
 }
 
-const NodeConfigForm: React.FC<NodeConfigFormProps> = ({ properties = [], onSubmit }) => {
+const NodeConfigForm: React.FC<NodeConfigFormProps> = ({ properties = [], onSubmit,defaultValuesNode }) => {
   // 1. Generate dynamic schema & default values
   console.log("Propertis",properties)
 
@@ -33,7 +34,9 @@ const NodeConfigForm: React.FC<NodeConfigFormProps> = ({ properties = [], onSubm
 
   // Update these to use the safe version:
   const schema = generateDynamicSchema(safeProperties);
-  const defaultValues = generateDefaultValue(safeProperties);
+  const defaultValues = defaultValuesNode || generateDefaultValue(safeProperties);
+
+  console.log("default",defaultValues)
 
 
   // 2. Initialize React Hook Form

@@ -21,6 +21,8 @@ export interface ISidebarNodeSummary {
     icon: string
     inputs: number
     outputs: number
+    comingSoon?:boolean
+
     properties: IFNodeProperty[]
 }
 
