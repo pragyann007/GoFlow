@@ -51,7 +51,7 @@ export function AppSidebar() {
                   <SidebarMenuItem  key={item.href}>
                     {/* asChild lets us pass next/link directly into the styled button */}
                     <SidebarMenuButton 
-                      asChild 
+                       
                       isActive={isActive}
                       className="w-full p-4 h-12 text-xs mb-4  font-medium"
                     >

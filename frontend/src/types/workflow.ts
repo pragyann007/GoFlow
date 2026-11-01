@@ -40,8 +40,18 @@ export interface IWorkflowCreation {
     id: string
     name: string
     active: boolean
-    nodes: Node[] 
+    nodes: XYNode[] 
     connections: {
         edges: Edge[]
     }
 }
+
+// types/workflow.ts
+
+export interface ICanvasNode {
+    id: string;
+    type: string;
+    data: Record<string, any>;
+    position: { x: number; y: number };
+    // ... other properties you use for nodes
+  }

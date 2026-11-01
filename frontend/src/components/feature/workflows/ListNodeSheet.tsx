@@ -38,7 +38,7 @@ const ListNodeSheet = ({ children }: { children: React.ReactNode }) => {
     return (
         <>
             <Sheet>
-                <SheetTrigger asChild>
+                <SheetTrigger >
                     {children}
                 </SheetTrigger>
                 {/* Made the sheet content a full-height flex container */}
