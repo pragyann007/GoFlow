@@ -37,7 +37,6 @@ export class DiscordNode implements INodeDefination {
     ];
 
     async execute(nodeParameters: any, incomingData: any[]) {
-        console.log("Discord incoming data:", incomingData);
         const { webhookUrl, username, content } = nodeParameters;
 
         if (!webhookUrl) {

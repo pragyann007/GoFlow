@@ -113,7 +113,6 @@ export class NodeExecuteProvider {
 
     private emitSocketUpdate(workflowId: string, eventName: string, data?: any) {
         this.socketGateway.emitToUserRoom(workflowId, eventName, data);
-        console.log(`[Socket] Room: ${workflowId} | Event: ${eventName} ->`, data ?? '');
     }
 
     /**
@@ -186,7 +185,6 @@ export class NodeExecuteProvider {
 
         // Safety verification in case the workflow layout is entirely empty
         if (!workflow.nodes || workflow.nodes.length === 0) {
-            console.log("No nodes present in the workflow execution target.");
             return;
         }
 
@@ -199,7 +197,6 @@ export class NodeExecuteProvider {
         // YOUR FALLBACK LOGIC: If there are no edges, execute the standalone node directly!
         // =================================================================
         if (edges.length === 0) {
-            console.log("No edges detected on canvas. Running your fallback standalone execution logic...");
             try {
                 const standaloneNode = workflow.nodes[0];
                 const nodeType = standaloneNode.data.type;
@@ -211,7 +208,6 @@ export class NodeExecuteProvider {
 
                 this.emitSocketUpdate(workflow.id,EVENT_STATUS,{status:STATUS.SUCCESS,node:nodeType});
                 this.emitSocketUpdate(workflow.id,EVENT_OUTPUT,result)
-                console.log("Standalone Execution Result:", result);
                 return; // Stop here since there are no paths to traverse
             } catch (error: any) {
                 console.error("Standalone Fallback Execution Failed:", error);
@@ -291,7 +287,7 @@ export class NodeExecuteProvider {
                         const deadBranchTarget = result.conditionPassed ? result.falseBranchTarget : result.trueBranchTarget;
                         if (deadBranchTarget) {
                             skippedNodes.add(deadBranchTarget);
-                            console.log(`[Switch Router] Condition passed: ${result.conditionPassed}. Pruning dead branch node ID: ${deadBranchTarget}`);
+                           
                         }
                     }
 

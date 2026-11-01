@@ -16,7 +16,6 @@ export class AuthenticationController {
   @Authentication(AuthType.NONE)
   @Post("register")
   async register(@Res({passthrough:true}) response:Response,@Body() registerDTO:RegisterDTO) {
-    console.log("hello hnny bunny me hu",registerDTO)
     const tokens =  await this.authenticationService.register(registerDTO);
     response.cookie("refresh-token",tokens.refreshToken);
 
@@ -28,7 +27,6 @@ export class AuthenticationController {
   async login(@Res({passthrough:true
 
   }) response:Response,@Body() loginDTO:LoginDTO){
-    console.log("login x1")
     const tokens =  await this.authenticationService.login(loginDTO);
     response.cookie("refresh-token",tokens.refreshToken,{httpOnly:true,sameSite:"strict"});
 
@@ -68,7 +66,6 @@ export class AuthenticationController {
   @Post("refresh")
   async refresh(@Req() req:Request,@Res({passthrough:true}) res:Response){
     const prevRefreshToken = req.cookies["refresh-token"];
-    console.log("REFERSG",prevRefreshToken)
     const {acessToken,refreshToken}=await this.authenticationService.refresh(prevRefreshToken);
     res.cookie("refresh-token",refreshToken);
     return {accessToken:acessToken}

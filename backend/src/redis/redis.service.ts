@@ -18,6 +18,13 @@ export class RedisService implements ICacheManager,OnModuleInit,OnModuleDestroy 
             tls: {
                 rejectUnauthorized: false,
             },
+            // --- Add these options to prevent Upstash drops & EPIPE/ECONNRESET ---
+            keepAlive: 30000,          // Send TCP keep-alive packets every 30 seconds
+            maxRetriesPerRequest: null, // Allow queueing commands during reconnects
+            retryStrategy(times) {
+                const delay = Math.min(times * 50, 2000);
+                return delay;          // Reconnect with exponential backoff up to 2s
+            },
             lazyConnect: true,
         });
     

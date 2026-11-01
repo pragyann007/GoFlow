@@ -67,13 +67,11 @@ export class WorkflowsService {
     async getAll(user: any) {
         try {
             const userId = user?.sub || user?.id;
-            console.log("id gra",userId)
             
             // Only fetch workflows belonging to the logged-in user
             const workflows = await this.workflowRepisitories.find({
                 where: { userId }
             });
-            console.log("workflows",workflows)
    
             return { workflows };
         } catch (error) {

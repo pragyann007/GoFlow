@@ -23,7 +23,7 @@ const useWorkflowSocket = (workflowId: string) => {
         if (!workflowId) return;
 
 
-        socketRef.current = io("http://localhost:3001", { query: { workflowId } })
+        socketRef.current = io("https://goflow-2l6f.onrender.com", { query: { workflowId } })
         const socket = socketRef.current;
 
         socket.on("connect", () => {

@@ -29,7 +29,6 @@ export class WorkflowsController {
   @Post("save")
   async save(@Req() req: Request, @Body() workflowDTO: WorkflowDTO) {
     const user = req["user"];
-    console.log(workflowDTO);
     return await this.workflowsService.saveWorkflow(workflowDTO, user);
   }
 
@@ -42,21 +41,18 @@ export class WorkflowsController {
   @Post(":workflowId/execute")
   async execute(@Req() req: Request, @Param("workflowId") workflowId: string) {
     const user = req["user"];
-    console.log("step1 ");
     return await this.workflowsService.executeWorkflow(workflowId, user);
   }
 
   @Get()
   async getAll(@Req() req: Request) {
     const user = req["user"];
-    console.log("get all called..", req.headers.authorization);
-    console.log("guse",user)
+  
     return this.workflowsService.getAll(user);
   }
 
   @Post("execute/node")
   async executeOneNode(@Body() nodeData) {
-    console.log("000No0000", nodeData);
     return await this.workflowsService.execteNode(nodeData);
   }
 }

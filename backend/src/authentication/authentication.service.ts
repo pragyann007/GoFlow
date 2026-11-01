@@ -39,11 +39,9 @@ export class AuthenticationService {
       throw new BadRequestException("No password sent..")
     };
 
-    console.log("u1")
 
 
     const userExists = await this.findUserProvider.findUserExists(registerDTO.email);
-    console.log("u2",userExists)
 
     if (userExists) {
       throw new BadRequestException("User already exists.")
@@ -75,19 +73,15 @@ export class AuthenticationService {
 
 
   async login(loginDTO: LoginDTO) {
-    console.log("login x2")
 
     const userExists = await this.findUserProvider.findUserExists(loginDTO.email);
-    console.log("login x3")
 
     if (!userExists) {
       throw new BadRequestException("Email doesnt exists...")
     }
-    console.log("login x4")
 
 
     const verifyPassword = await this.hashProvider.verifyHash(loginDTO.password, userExists.password!);
-    console.log("login x5",verifyPassword)
 
 
     if (!verifyPassword) {

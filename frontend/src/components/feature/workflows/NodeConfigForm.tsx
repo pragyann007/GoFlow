@@ -57,7 +57,6 @@ const NodeConfigForm: React.FC<NodeConfigFormProps> = ({ properties = [], onSubm
   const watchedValues = useWatch({ control });
 
   const handleFormSubmit = (data: any) => {
-    alert("hii")
     console.log("Submitted Node Config:",data);
     if (onSubmit) onSubmit(data);
   };
