@@ -11,7 +11,6 @@ export class WorkflowsController {
   constructor(private readonly workflowsService: WorkflowsService,private readonly registry:NodeRegistry) {}
 
 
-  @Authentication(AuthType.NONE)
   @Get("nodes")
   nodeTypes(){
     return this.workflowsService.getALlNodes()
@@ -19,11 +18,11 @@ export class WorkflowsController {
   }
 
   @Post()
-  async create(@Body() createWorkflowDTO:CreateWorkflowDTO){
-    return this.workflowsService.create(createWorkflowDTO)
+  async create(@Req() req:Request,@Body() createWorkflowDTO:CreateWorkflowDTO){
+    console.log("UU",req["user"])
+    return this.workflowsService.create(createWorkflowDTO,user)
   }
 
-  @Authentication(AuthType.NONE)
   @Post("save")
   async save(@Body() workflowDTO:WorkflowDTO ){
     console.log(workflowDTO)
@@ -33,7 +32,6 @@ export class WorkflowsController {
   }
 
 
-  @Authentication(AuthType.NONE)
   @Get(":workflowId")
   async getWorkflows(@Param("workflowId") workflowId:string){
 
@@ -41,8 +39,6 @@ export class WorkflowsController {
 
   }
 
-
-  @Authentication(AuthType.NONE)
   @Post(":workflowId/execute")
   async execute (@Param("workflowId") workflowId:string){
 
@@ -60,7 +56,6 @@ export class WorkflowsController {
   }
 
 
-  @Authentication(AuthType.NONE)
 
   @Post("execute/node")
   async executeOneNode(@Body() nodeData ){

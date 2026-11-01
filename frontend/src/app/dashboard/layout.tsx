@@ -8,7 +8,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-  //  <RouteGuard>
+   <RouteGuard>
      <SidebarProvider>
       <div className="flex h-screen w-screen bg-background overflow-hidden">
         
@@ -27,6 +27,6 @@ export default function DashboardLayout({
 
       </div>
     </SidebarProvider>
-  //  </RouteGuard>
+   </RouteGuard>
   )
 }
