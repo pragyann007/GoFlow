@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { INodeDefination, INodeProperty } from "../interfaces/node-registry.interface";
 import { Node } from "../decorators/node.decorator";
-import { cond } from "lodash";
 
 @Injectable()
 @Node()

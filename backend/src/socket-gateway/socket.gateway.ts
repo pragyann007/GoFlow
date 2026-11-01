@@ -2,7 +2,7 @@ import { SubscribeMessage, WebSocketGateway,OnGatewayConnection,OnGatewayDisconn
 import type {Server,Socket} from "socket.io"
 
 @WebSocketGateway({cors:{
-  origin:"http://localhost:3000"
+  origin:["http://localhost:3000","https://gooflow.vercel.app"]
 }})
 export class SocketGateway implements OnGatewayConnection,OnGatewayDisconnect {
 

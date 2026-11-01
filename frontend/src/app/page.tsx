@@ -563,7 +563,9 @@ export default function Page() {
           <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <span>© 2026 GoFlow. All rights reserved.</span>
             <span className="font-mono">
-              creator: <span className="text-primary">PraganThapaliya</span>
+              creator: <span className="text-primary">
+                <a href="https://www.instagram.com/not_pragyann/" target='_blank'>Pragyan Thapaliya</a>
+              </span>
             </span>
           </div>
         </div>

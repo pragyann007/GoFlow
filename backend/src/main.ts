@@ -9,7 +9,7 @@ async function bootstrap() {
 
   app.enableCors({
     // Replace with your actual frontend URL(s)
-    origin: ['http://localhost:3000', 'https://yourdomain.com'], 
+    origin: ['http://localhost:3000', 'https://gooflow.vercel.app'], 
     
     // Explicitly define allowed methods
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', 
