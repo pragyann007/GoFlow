@@ -32,7 +32,7 @@ const getAllAncestorNodeIds = (currentNodeId: string, edges: Edge[]): string[] =
 
 const InpuTab = ({ nodeId }: { nodeId: string }) => {
   const nodeOutputs = useWorkflowStore((state) => state.nodeOutputs)
-  const edges = useWorkflowStore((state) => state.edges)
+  const edges = useWorkflowStore((state) => state.edges) 
   const nodes = useWorkflowStore((state) => state.nodes)
 
   const upstreamInputs = useMemo(() => {

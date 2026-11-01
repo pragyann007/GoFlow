@@ -14,7 +14,7 @@ export const authService ={
     },
 
     async logout():Promise<void>{
-        await api.post("/authenication/logout")
+        await api.post("/authentication/logout")
 
     }
 }

@@ -51,10 +51,10 @@ export const useLogout = ()=>{
         mutationFn:authService.logout,
         onSuccess:()=>{
             clearAuth();
-            toast.success("Succesfully Logged Out")
-            router.push("/auth/login")
+            toast.success("Succesfully Logged Out ")
+            router.push("/")
         },onError: (error: any) => {
-            toast.error(error.message || "Logout failed"); // ❌ Toast here
+            toast.error(error.message || "Logout failed"); 
           },
     }
     )

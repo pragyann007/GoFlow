@@ -13,6 +13,7 @@ import { useParams } from 'next/navigation';
 import { useFetchWorkflow } from '@/hooks/useWorkflows';
 import { Spinner } from '@/components/ui/spinner';
 import useWorkflowSocket from '@/hooks/useWorkflowSocket';
+import { useTheme } from 'next-themes';
 
 const nodeTypes = {
   custom:WorkflowNodeUi
@@ -82,9 +83,10 @@ const page = () => {
      
     // ]
  
+    const {resolvedTheme} = useTheme()
     const params = useParams()
 
-    const {nodes,edges,onEdgesChange,onNodesChange,onConnect,setNodes,setEdges} = useWorkflowStore()
+    const {nodes,edges,onEdgesChange,onNodesChange,onConnect,setNodes,setEdges,resetWorkflow} = useWorkflowStore()
     const workflowId = Array.isArray(params.workflowId) ? params.workflowId[0] : params.workflowId
 
     if(!workflowId){
@@ -96,18 +98,18 @@ const page = () => {
     const {data,isLoading} = useFetchWorkflow(workflowId)
     console.log("PAG",data)
 
+    useEffect(() => {
+      resetWorkflow();
+    }, [workflowId, resetWorkflow]);
     useEffect(()=>{
+      if(data?.workflow){
+        const nodes: Node[] = data.workflow.nodes || [];
+        const edges: Edge[] = data.workflow.connections?.edges || []; 
 
-      if(data){
-        const nodes:Node[] = data.workflow.nodes ;
-        const edges:Edge[] = data.workflow.connections.edges ; 
-
-        setNodes(nodes)
-        setEdges(edges)
-
+        setNodes(nodes);
+        setEdges(edges);
       }
-
-    },[data,setNodes,setEdges])
+    },[data, setNodes, setEdges])
 
 
   
@@ -120,31 +122,32 @@ const page = () => {
       </>
     }
   
-   return (
-    <div className='w-full h-full p-4  flex-wrap-reverse' >
-        <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        panOnDrag={false}
-        selectionOnDrag={true}
-        panOnScroll={true}
-        style={{color:"black"}}
-        nodeTypes={nodeTypes}
-        onConnect={onConnect}
-        >
-            <MiniMap bgColor='black' />
-            <Background bgColor='black' />
-            <Controls className='' />
-            <Panel position="bottom-left">
-    <h1 className='text-white' >My Flow</h1>
-  </Panel>
-        </ReactFlow>
-
-      <WorkflowNodesForm/>
-    </div>
-   )
+    return (
+      // Adding key={workflowId} forces React to unmount and remount the entire canvas on workflow switch
+      <div key={workflowId} className='w-full h-full p-4 flex-wrap-reverse'>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            panOnDrag={false}
+            selectionOnDrag={true}
+            panOnScroll={true}
+            style={{color:"black"}}
+            nodeTypes={nodeTypes}
+            onConnect={onConnect}
+          >
+              <MiniMap bgColor='black' />
+              <Background bgColor={resolvedTheme == "dark" ? "black":"white"} />
+              <Controls className='' />
+              <Panel position="bottom-left">
+                <h1 className='text-white'>My Flow</h1>
+              </Panel>
+          </ReactFlow>
+  
+        <WorkflowNodesForm/>
+      </div>
+     )
 }
 
 export default page

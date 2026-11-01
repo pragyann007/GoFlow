@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
+/* ─────────── EDIT THESE ───────────
    Put real product media in /public and set ONE of these (video wins).
    Leave both empty to show the animated app preview built below. */
 const PRODUCT_VIDEO = '' // e.g. '/demo.mp4'

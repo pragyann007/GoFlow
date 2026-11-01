@@ -44,6 +44,7 @@ export class AuthenticationController {
 
   }
 
+  @Authentication(AuthType.NONE)
   @Post("logout")
   async logout(@Req() req:Request,@Res({passthrough:true}) res:Response){
     const refreshToken = req.cookies["refresh-token"];
@@ -62,9 +63,12 @@ export class AuthenticationController {
 
   }
 
-  @Get("refresh")
+  @Authentication(AuthType.NONE)
+
+  @Post("refresh")
   async refresh(@Req() req:Request,@Res({passthrough:true}) res:Response){
     const prevRefreshToken = req.cookies["refresh-token"];
+    console.log("REFERSG",prevRefreshToken)
     const {acessToken,refreshToken}=await this.authenticationService.refresh(prevRefreshToken);
     res.cookie("refresh-token",refreshToken);
     return {accessToken:acessToken}

@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Workflows } from './entities/workflow.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,133 +11,127 @@ import { NodeExecuteProvider } from 'src/nodes-engine/node-executor.provider';
 @Injectable()
 export class WorkflowsService {
 
-
     constructor(
         @InjectRepository(Workflows)
-        private readonly workflowRepisitories:Repository<Workflows>,
-    private readonly registry:NodeRegistry,
+        private readonly workflowRepisitories: Repository<Workflows>,
+        private readonly registry: NodeRegistry,
+        @InjectQueue("node-execute") private readonly nodeExecuteQuee: Queue,
+        private readonly nodeProvider: NodeExecuteProvider
+    ) {}
 
-        @InjectQueue("node-execute") private readonly nodeExecuteQuee:Queue,
-        private readonly nodeProvider:NodeExecuteProvider
-    ){}
-
-    async create(createWorkflowDTO:CreateWorkflowDTO){
-
-    try {
-            let  workflow =  this.workflowRepisitories.create({name:createWorkflowDTO.name})
+    async create(createWorkflowDTO: CreateWorkflowDTO, user: any) {
+        try {
+            // Extract the user ID from JWT payload ('sub' or 'id')
+            const userId = user?.sub || user?.id;
+            
+            let workflow = this.workflowRepisitories.create({
+                name: createWorkflowDTO.name,
+                userId: userId // Bind tenancy!
+            });
             workflow = await this.workflowRepisitories.save(workflow);
     
-            return {
-                workflow
-            }
-    
-    } catch (error) {
-        return   new InternalServerErrorException("Something went wrong")
-        
-    }
-       
-
-        
-
-
+            return { workflow };
+        } catch (error) {
+            return new InternalServerErrorException("Something went wrong");
+        }
     }
 
+    async saveWorkflow(createWorkflowDTO: WorkflowDTO, user: any) {
+        const userId = user?.sub || user?.id;
 
-    async saveWorkflow(createWorkflowDTO:WorkflowDTO){
+        // Ensure the workflow belongs to this specific user
+        const workflowExists = await this.workflowRepisitories.findOneBy({ 
+            id: createWorkflowDTO.id, 
+            userId: userId 
+        });
 
-        const workflowWExists = await this.workflowRepisitories.findOneBy({id:createWorkflowDTO.id})
-
-        if(!workflowWExists){
-            throw new NotFoundException("Workflow not found..")
+        if (!workflowExists) {
+            throw new NotFoundException("Workflow not found..");
         }
 
-        const {name,active,connections,nodes} = createWorkflowDTO
+        const { name, active, connections, nodes } = createWorkflowDTO;
 
-        const saveWorkflow = await this.workflowRepisitories.update({
-            id:createWorkflowDTO.id,
-        },{
+        const updatedWorkflow = await this.workflowRepisitories.update({
+            id: createWorkflowDTO.id,
+            userId: userId
+        }, {
             name,
             active,
             nodes,
             connections
-        })
+        });
 
-
-
-        return {message:"Workflow saved succesfully..",updatedWorkflow:saveWorkflow}
+        return { message: "Workflow saved succesfully..", updatedWorkflow };
     }
 
-    async getAll(){
-     try {
-           const workflows = await this.workflowRepisitories.find()
+    async getAll(user: any) {
+        try {
+            const userId = user?.sub || user?.id;
+            console.log("id gra",userId)
+            
+            // Only fetch workflows belonging to the logged-in user
+            const workflows = await this.workflowRepisitories.find({
+                where: { userId }
+            });
+            console.log("workflows",workflows)
    
-           return {
-               workflows
-           }
-     } catch (error) {
-        return   new InternalServerErrorException("Something went wrong")
-
-        
-     }
+            return { workflows };
+        } catch (error) {
+            return new InternalServerErrorException("Something went wrong");
+        }
     }
 
-    async getOne(workflowId:string){
+    async getOne(workflowId: string, user: any) {
+        if (!workflowId) return;
 
-        if(!workflowId) {
-            return  
-        }
+        const userId = user?.sub || user?.id;
 
-        const workflowExists = await this.workflowRepisitories.findOneBy({id:workflowId})
+        // Ensure cross-tenant access is blocked
+        const workflowExists = await this.workflowRepisitories.findOneBy({ 
+            id: workflowId, 
+            userId: userId 
+        });
 
-        if(!workflowExists){
+        if (!workflowExists) {
             throw new NotFoundException("Workflow not found");
         }
 
-        return {
-            workflow:workflowExists
+        return { workflow: workflowExists };
+    }
+
+    async getALlNodes() {
+        return this.registry.listAllNodes();
+    }
+
+    async executeWorkflow(workflowId: string, user: any) {
+        const userId = user?.sub || user?.id;
+
+        // Security check: Verify the workflow belongs to the user before queuing execution
+        const workflowExists = await this.workflowRepisitories.findOneBy({ 
+            id: workflowId, 
+            userId: userId 
+        });
+
+        if (!workflowExists) {
+            throw new NotFoundException("Workflow not found or unauthorized");
         }
 
+        await this.nodeExecuteQuee.add("execute", { workflowId });
 
+
+        return { "message": "Workflow executing.." };
     }
-
-
-    async getALlNodes(){
-        return this.registry.listAllNodes()
-
-
-    }
-    async executeWorkflow (workflowId:string){
-
-        console.log("step2 ",workflowId)
-
-
-        await this.nodeExecuteQuee.add("execute",{workflowId})
-        console.log("step3 ",workflowId)
-
-
-        return {"message":"Workflow executing.."}
-
-
-
-
-
-    }
-
 
     async execteNode(data) {
-        console.log("hu", data.nodeData.type, data.nodeData.values, data.incomingDatas);
     
-        // 1. Dynamically resolve any {{tags}} using the incomingData sent from the frontend
         const resolvedValues = this.nodeProvider.resolvedParameters(data.nodeData.values, data.incomingDatas);
     
-        // 2. Execute the node logic using the resolved parameter values
         const res = await this.nodeProvider.executeActualNodeLogic(
             data.nodeData.type, 
             resolvedValues, 
             data.incomingDatas
         );
     
-        console.log("RES aayo hai taa", res);
         return res;
     }
 }

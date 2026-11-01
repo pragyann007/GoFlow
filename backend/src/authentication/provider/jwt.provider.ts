@@ -25,15 +25,27 @@ export class JwtProvider {
 
     }
 
-    public async generateTokens(user:User|ITokenUser){
-        const [acessToken,refreshToken] =await  Promise.all(
-            [
-                 this.signToken(user.id,this.configService.getOrThrow("JWT_ACCESS_TOKEN_TTL"),this.configService.getOrThrow("JWT_ACCESS_SECRET"),{email:user.email}),
-                 this.signToken(user.id,this.configService.getOrThrow("JWT_ACCESS_TOKEN_TTL"),this.configService.getOrThrow("JWT_REFRESH_SECRET"),),
-            ]
-        )
+    public async generateTokens(user: User | ITokenUser) {
+        const payload = { email: user.email };
 
-        return {acessToken,refreshToken};
+        const [acessToken, refreshToken] = await Promise.all([
+            // Access Token
+            this.signToken(
+                user.id, 
+                this.configService.getOrThrow("JWT_ACCESS_TOKEN_TTL"), 
+                this.configService.getOrThrow("JWT_ACCESS_SECRET"), 
+                payload
+            ),
+            // Refresh Token - NOW INCLUDES PAYLOAD TOO (or at least sub is explicitly handled by signToken)
+            this.signToken(
+                user.id, 
+                this.configService.getOrThrow("JWT_REFRESH_TOKEN_TTL"), // Also make sure TTL uses refresh secret config if separate!
+                this.configService.getOrThrow("JWT_REFRESH_SECRET"), 
+                payload
+            ),
+        ]);
+
+        return { acessToken, refreshToken };
     }
 
     public async verifyToken(token:string,secret:string){

@@ -15,6 +15,8 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { Button } from "./ui/button"
+import { useLogout } from "@/hooks/useAuth"
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -22,6 +24,12 @@ export function AppSidebar() {
   const navigationItems = [
     { href: "/dashboard/workflows", title: "Workflows", icon: Network },
   ]
+
+  const{mutate:logout,isPending} = useLogout()
+  const logOut = ()=>{
+    logout()
+
+  }
 
   return (
     <Sidebar className="border-r border-border bg-card">
@@ -61,6 +69,7 @@ export function AppSidebar() {
       </SidebarContent>
       
       <SidebarFooter className="p-3 border-t border-border text-[11px] text-muted-foreground text-center">
+        <Button disabled={isPending} onClick={logOut} >Log Out</Button>
         v1.0.0
       </SidebarFooter>
     </Sidebar>

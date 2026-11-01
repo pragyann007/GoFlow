@@ -2,11 +2,11 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
-  withCredentials: true, // Crucial: Tells browser to send & receive HTTP-only cookies automatically
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  withCredentials: true,
 });
 
-// 1. Request Interceptor: Attach Access Token from Zustand to every request
+// 1. Request Interceptor: Attach Access Token from Zustand
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken;
@@ -18,71 +18,63 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 2. Response Interceptor: Handle Silent Refresh on 401
-let isRefreshing = false;
-let failedQueue: any[] = [];
-
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve(token);
-  });
-  failedQueue = [];
-};
+// 2. Response Interceptor with Promise Locking to prevent duplicate refresh calls
+let refreshPromise: Promise<string> | null = null;
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If status is 401 and we haven't already tried retrying this request
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        // If another refresh is already happening, queue this request
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return api(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
+    // Prevent infinite loop if the refresh endpoint itself fails with 401
+    if (originalRequest.url?.includes('/authentication/refresh')) {
+      return Promise.reject(error);
+    }
 
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      isRefreshing = true;
 
       try {
-        // Call backend refresh route (Browser automatically sends the HTTP-only cookie)
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
+        // If a refresh isn't already in progress, start one and cache the promise
+        if (!refreshPromise) {
+          refreshPromise = (async () => {
+            try {
+              const response = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/authentication/refresh`,
+                {},
+                { withCredentials: true }
+              );
 
-        const newAccessToken = response.data.accessToken;
+              const newAccessToken = response.data.accessToken || response.data.access_token;
+              if (!newAccessToken) {
+                throw new Error("No access token returned from refresh endpoint");
+              }
 
-        // Save new access token in Zustand memory
-        useAuthStore.setState({ accessToken: newAccessToken });
+              // Save new access token in Zustand memory
+              useAuthStore.setState({ accessToken: newAccessToken });
+              return newAccessToken;
+            } finally {
+              // Clear the lock once finished (success or fail)
+              refreshPromise = null;
+            }
+          })();
+        }
 
-        // Process any queued requests with the new token
-        processQueue(null, newAccessToken);
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        // All concurrent 401 requests will wait for this single promise to resolve
+        const token = await refreshPromise;
+        originalRequest.headers.Authorization = `Bearer ${token}`;
         
         return api(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError, null);
-        // If refresh token also expired, wipe auth and kick user to login page
-        useAuthStore.getState().clearAuth();
-        if (typeof window !== 'undefined') {
+        // If the shared refresh call fails, clear auth and redirect
+        useAuthStore.getState().clearAuth?.();
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth/login')) {
           window.location.href = '/auth/login';
         }
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 
     return Promise.reject(error);
   }
-);      
+);

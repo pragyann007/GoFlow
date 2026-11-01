@@ -18,22 +18,33 @@ import { BullModule } from "@nestjs/bullmq"
 import { SocketGatewayModule } from './socket-gateway/socket-gateway.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({isGlobal:true}),TypeOrmModule.forRootAsync({
-    inject:[ConfigService],
-    useFactory:(configService:ConfigService)=>({
-      
-      type:"postgres",
-      synchronize:true,
-      autoLoadEntities:true,
-      database:configService.get("DB_NAME"),
-      username:configService.get("DB_USERNAME"),
-      password:configService.get("DB_PASSWORD"),
-      host:configService.get("DB_HOST"),
-      port:Number(configService.get("DB_PORT"))
-
+  imports: [ConfigModule.forRoot({isGlobal:true}),
+   
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        url: configService.getOrThrow<string>('DATABASE_URL'),
+        synchronize: true, // Keep true for initial deploy to auto-create tables, then set to false
+        autoLoadEntities: true,
+        ssl: {
+          rejectUnauthorized: false, // Required for both Neon and Supabase prod layers
+        },
+      }),
     }),
     
-  }),BullModule.forRootAsync({
+    
+    
+    
+    
+    
+    
+    
+    
+
+  
+  BullModule.forRootAsync({
     inject:[ConfigService],
     useFactory: (configService: ConfigService) => ({
       connection: {

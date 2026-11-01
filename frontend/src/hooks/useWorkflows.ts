@@ -19,7 +19,9 @@ export const useFetchWorkflow = (workflowId:string)=>{
             {
                 queryKey:["workflows",workflowId],
                 queryFn: () => workflowService.fetchWorkflowById(workflowId),
-                enabled:!!workflowId
+                enabled:!!workflowId,
+                staleTime: 0,               // Data is immediately considered stale
+            refetchOnMount: "always",
             }
     )
 }

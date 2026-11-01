@@ -13,6 +13,7 @@ import Redis from 'ioredis';
 import { RedisService } from 'src/redis/redis.service';
 import { ITokenUser } from './interfaces/user-tokengen-interface';
 import { find } from 'rxjs';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthenticationService {
@@ -23,7 +24,8 @@ export class AuthenticationService {
     @InjectRepository(User)
     private readonly userRepisotory: Repository<User>,
     private readonly findUserProvider: FindUserProvider,
-    private readonly jwtTokenProvider: JwtProvider
+    private readonly jwtTokenProvider: JwtProvider,
+    private readonly configService:ConfigService
   ) { }
 
 
@@ -102,32 +104,40 @@ export class AuthenticationService {
 
   }
 
-  async refresh(refreshToken:string){
+  async refresh(refreshToken: string) {
+    // 1. Verify and decode the incoming refresh token directly
+    const decoded = await this.jwtTokenProvider.verifyToken(
+      refreshToken,
+      this.configService.getOrThrow("JWT_REFRESH_SECRET")
+    );
+
+    const userId = decoded.sub;
+    const email = decoded.email;
+
+    if (!userId) {
+      throw new UnauthorizedException("Invalid refresh token payload");
+    }
+
+    // 2. Check if this refresh token session is still active in Redis
     const key = this.generateRedisKeyRefreshToken(refreshToken);
-    const findTokenInCache:ITokenUser|null = await this.redis.get(key);
+    const exists = await this.redis.get(key);
 
-    if(!findTokenInCache){
-   
-      throw new UnauthorizedException("Invalid refersh token")
-
+    if (!exists) {
+      throw new UnauthorizedException("Session expired or revoked");
     }
 
-    const payload = {
-      id:findTokenInCache.id,
-      email:findTokenInCache.email,
+    // 3. Generate fresh tokens using the verified sub and email
+    const tokens = await this.jwtTokenProvider.generateTokens({
+      id: userId,
+      email: email,
+    });
 
-    }
-    const tokens = await this.jwtTokenProvider.generateTokens(payload);
-
+    // 4. Rotate the Redis session
     await this.redis.del(key);
-    const newKey = this.generateRedisKeyRefreshToken(tokens.refreshToken)
-    await this.redis.set(newKey,payload)
-
+    const newKey = this.generateRedisKeyRefreshToken(tokens.refreshToken);
+    await this.redis.set(newKey, { id: userId, email });
 
     return tokens;
-
-
-    
   }
 
   async logout(refreshToken:string){

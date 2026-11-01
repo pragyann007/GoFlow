@@ -27,6 +27,7 @@ interface WorkflowState {
     nodeStatus:Record<string,any>;
     setNodeStatus:(nodeName:string,status:string)=>void ; 
     resetExecutionState: ()=>void;
+    resetWorkflow: () => void; // <-- Add this    
 
 
 }
@@ -85,11 +86,11 @@ export const useWorkflowStore = create<WorkflowState>()(
                 );
             }),
             setNodes: (nodes: Node[]) => set(() => ({
-                nodes: nodes
+                nodes: nodes || []
             }), false, "setNodes"),
             
             setEdges: (edges: Edge[]) => set(() => ({
-                edges: edges
+                edges: edges || []
             }), false, "setEdges"),
             setNodeOutputs:(nodeId:string,output:any)=>set((state)=>({
                 nodeOutputs:{
@@ -105,6 +106,12 @@ export const useWorkflowStore = create<WorkflowState>()(
                 nodeStatus: {}, 
                 nodeOutputs: {} 
             }),
+            resetWorkflow: () => set({
+                nodes: [],
+                edges: [],
+                nodeOutputs: {},
+                nodeStatus: {}
+            }, false, "resetWorkflow"),
 
         })
     ),
