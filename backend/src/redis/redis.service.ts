@@ -12,22 +12,22 @@ export class RedisService implements ICacheManager,OnModuleInit,OnModuleDestroy 
     async onModuleInit() {
         this.logger.log("initialising redis client");
         this.redisClient = new Redis({
-            host:this.configService.getOrThrow("REDIS_HOST"),
-            port:6379,
-            password:this.configService.getOrThrow("REDIS_PASSWORD"),
-            lazyConnect:true
-        })
-
+            host: this.configService.getOrThrow("REDIS_HOST"),
+            port: Number(this.configService.getOrThrow("REDIS_PORT") || 6379),
+            password: this.configService.getOrThrow("REDIS_PASSWORD"),
+            tls: {
+                rejectUnauthorized: false,
+            },
+            lazyConnect: true,
+        });
+    
         try {
             await this.redisClient.connect();
-            this.logger.log("Redis connected succesfully.")
-            
+            this.logger.log("Redis connected succesfully.");
         } catch (error) {
             this.logger.error('Failed to connect to Redis', error.stack);
-            
         }
     }
- 
     async get<T>(key: string): Promise<T | null> {
 
         const data = await this.redisClient.get(key);
