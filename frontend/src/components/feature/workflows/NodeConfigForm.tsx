@@ -28,7 +28,6 @@ interface NodeConfigFormProps {
 
 const NodeConfigForm: React.FC<NodeConfigFormProps> = ({ properties = [], onSubmit,defaultValuesNode }) => {
   // 1. Generate dynamic schema & default values
-  console.log("Propertis",properties)
 
   const safeProperties = Array.isArray(properties) ? properties : [];
 
@@ -36,7 +35,6 @@ const NodeConfigForm: React.FC<NodeConfigFormProps> = ({ properties = [], onSubm
   const schema = generateDynamicSchema(safeProperties);
   const defaultValues = defaultValuesNode || generateDefaultValue(safeProperties);
 
-  console.log("default",defaultValues)
 
 
   // 2. Initialize React Hook Form
@@ -57,7 +55,6 @@ const NodeConfigForm: React.FC<NodeConfigFormProps> = ({ properties = [], onSubm
   const watchedValues = useWatch({ control });
 
   const handleFormSubmit = (data: any) => {
-    console.log("Submitted Node Config:",data);
     if (onSubmit) onSubmit(data);
   };
 

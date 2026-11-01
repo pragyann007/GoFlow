@@ -20,7 +20,6 @@ import { ISidebarNodeSummary } from "@/types/workflow"
 const ListNodeSheet = ({ children }: { children: React.ReactNode }) => {
 
     const { data: nodes, isLoading } = useGetAllNodes()
-    console.log("data",nodes)
     const addNode = useWorkflowStore((state)=>state.addNode);
 
     // Fixed: Added explicit return statement so it doesn't try to render the layout below during loading states
@@ -33,7 +32,6 @@ const ListNodeSheet = ({ children }: { children: React.ReactNode }) => {
     }
 
     const handleAddNodes=(nodeObj:ISidebarNodeSummary)=>{
-        console.log("nodeobj",nodeObj)
         addNode(nodeObj);
     }
 

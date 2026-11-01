@@ -13,7 +13,6 @@ interface ConfigPanelProps {
 }
 
 const ConfigPanel: React.FC<ConfigPanelProps> = ({ activeNodeId, properties = [], onSubmit ,activeNodeDatas}) => {
-  console.log("CONFIG panel",activeNodeDatas.data.values)
   return (
     <div className="grid h-full min-h-0 w-full grid-cols-1 lg:grid-cols-[minmax(260px,3fr)_minmax(380px,4fr)_minmax(260px,3fr)]">
       {/* Input */}

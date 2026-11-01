@@ -43,17 +43,26 @@ import { SocketGatewayModule } from './socket-gateway/socket-gateway.module';
     
     
 
-  
-  BullModule.forRootAsync({
-    inject:[ConfigService],
-    useFactory: (configService: ConfigService) => ({
-      connection: {
-        host: configService.get("REDIS_HOST"),
-        port: Number(configService.get("REDIS_PORT")),
-        password: configService.get("REDIS_PASSWORD"),
-      },
-    })
-  }),AuthenticationModule, UsersModule, RedisModule, WorkflowsModule,NodeModule, SocketGatewayModule],
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.getOrThrow("REDIS_HOST"),
+          port: Number(configService.getOrThrow("REDIS_PORT")),
+          password: configService.getOrThrow("REDIS_PASSWORD"),
+          tls: {
+            rejectUnauthorized: false,
+            servername: configService.getOrThrow("REDIS_HOST"),
+          },
+          keepAlive: 10000,          // Keep idle sockets alive against Render's firewall
+          maxRetriesPerRequest: null, // REQUIRED for BullMQ to handle reconnects properly
+          retryStrategy(times) {
+            const delay = Math.min(times * 100, 3000);
+            return delay;
+          },
+        },
+      }),
+    }),AuthenticationModule, UsersModule, RedisModule, WorkflowsModule,NodeModule, SocketGatewayModule],
   controllers: [AppController],
   providers: [AppService,{
     provide:APP_GUARD,

@@ -21,7 +21,6 @@ const WorkflowNodesForm = () => {
   const nodes = useWorkflowStore((state) => state.nodes)
 
   const activeNode = nodes.find((n) => n.id === activeNodeId)
-  console.log("amactive",activeNode)
 
   if(!activeNode) return 
 

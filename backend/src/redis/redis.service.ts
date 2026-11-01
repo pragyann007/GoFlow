@@ -10,30 +10,33 @@ export class RedisService implements ICacheManager,OnModuleInit,OnModuleDestroy 
     constructor(private readonly configService:ConfigService){}
 
     async onModuleInit() {
-        this.logger.log("initialising redis client");
+        this.logger.log("Initialising Redis client...");
+        
         this.redisClient = new Redis({
             host: this.configService.getOrThrow("REDIS_HOST"),
             port: Number(this.configService.getOrThrow("REDIS_PORT") || 6379),
             password: this.configService.getOrThrow("REDIS_PASSWORD"),
             tls: {
                 rejectUnauthorized: false,
+                servername: this.configService.getOrThrow("REDIS_HOST"), // Crucial for Upstash TLS SNI routing on cloud hosts
             },
-            // --- Add these options to prevent Upstash drops & EPIPE/ECONNRESET ---
-            keepAlive: 30000,          // Send TCP keep-alive packets every 30 seconds
-            maxRetriesPerRequest: null, // Allow queueing commands during reconnects
+            keepAlive: 10000,          // Drop keep-alive down to 10s to prevent Render firewalls from closing idle sockets
+            maxRetriesPerRequest: null, // Required for BullMQ / queue operations
+            enableReadyCheck: true,
             retryStrategy(times) {
-                const delay = Math.min(times * 50, 2000);
-                return delay;          // Reconnect with exponential backoff up to 2s
+                const delay = Math.min(times * 100, 3000);
+                return delay;
             },
-            lazyConnect: true,
         });
     
-        try {
-            await this.redisClient.connect();
-            this.logger.log("Redis connected succesfully.");
-        } catch (error) {
-            this.logger.error('Failed to connect to Redis', error.stack);
-        }
+        // Add error event listeners to prevent unhandled 'error' event crashes on Node.js sockets
+        this.redisClient.on('error', (err) => {
+            this.logger.error(`Redis Client Error: ${err.message}`);
+        });
+    
+        this.redisClient.on('connect', () => {
+            this.logger.log("Redis connection established successfully.");
+        });
     }
     async get<T>(key: string): Promise<T | null> {
 

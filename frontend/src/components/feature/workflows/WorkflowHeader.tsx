@@ -22,7 +22,6 @@ const WorkflowHeader = () => {
             const res = await api.post("/workflows", { name:workflowName })
             const data = res.data;
 
-            console.log(data)
             toast.success("Workflow created..")
             router.push(`/dashboard/workflows/${data.workflow.id}`)
 

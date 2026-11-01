@@ -28,8 +28,6 @@ const Page = () => { // Capitalized component name for Next.js convention
 
     const router = useRouter()
     const onSubmit = (values: z.infer<typeof formSchema>) => {
-        console.log("value is ", values)
-        console.log("hii ")
 
     
           register(values)
