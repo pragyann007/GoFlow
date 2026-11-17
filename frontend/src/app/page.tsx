@@ -124,6 +124,7 @@ function AmbientBackground() {
    AUTHENTIC INTERACTIVE WORKFLOW PREVIEW
    Directly mirrors GoFlow's real execution engine:
    Webhook -> Switch Condition -> AI Agent (or Skipped) -> Slack
+   Connected edges with animated flowing data dots from outputs to inputs.
    ───────────────────────────────────────────────────────────── */
 interface CanvasNode {
   id: string
@@ -132,18 +133,21 @@ interface CanvasNode {
   icon: LucideIcon
   x: number
   y: number
+  width: number
+  height: number
 }
 
 const FLOW_NODES: CanvasNode[] = [
-  { id: 'webhook', title: 'Webhook Trigger', subtitle: 'POST /v1/lead', icon: Webhook, x: 20, y: 110 },
-  { id: 'switch', title: 'Switch Condition', subtitle: 'lead.score >= 80', icon: Network, x: 250, y: 110 },
-  { id: 'ai', title: 'AI Agent', subtitle: 'Gemini / OpenAI draft', icon: Bot, x: 480, y: 40 },
-  { id: 'archive', title: 'Cold Storage', subtitle: 'Branch Pruned', icon: ShieldAlert, x: 480, y: 180 },
-  { id: 'slack', title: 'Slack Notification', subtitle: 'Post #vip-deals', icon: Hash, x: 710, y: 40 },
+  { id: 'webhook', title: 'Webhook Trigger', subtitle: 'POST /v1/lead', icon: Webhook, x: 20, y: 110, width: 160, height: 70 },
+  { id: 'switch', title: 'Switch Condition', subtitle: 'lead.score >= 80', icon: Network, x: 260, y: 110, width: 160, height: 70 },
+  { id: 'ai', title: 'AI Agent', subtitle: 'Gemini / OpenAI draft', icon: Bot, x: 500, y: 35, width: 160, height: 70 },
+  { id: 'archive', title: 'Cold Storage', subtitle: 'Branch Pruned', icon: ShieldAlert, x: 500, y: 185, width: 160, height: 70 },
+  { id: 'slack', title: 'Slack Notification', subtitle: 'Post #vip-deals', icon: Hash, x: 740, y: 35, width: 160, height: 70 },
 ]
 
 function InteractiveFlowCanvas() {
   const [running, setRunning] = useState(false)
+  const [activeEdge, setActiveEdge] = useState<string | null>(null)
   const [nodeStatus, setNodeStatus] = useState<Record<string, 'idle' | 'running' | 'completed' | 'skipped'>>({})
   const [logs, setLogs] = useState<string[]>([])
 
@@ -151,54 +155,64 @@ function InteractiveFlowCanvas() {
     if (running) return
     setRunning(true)
     setNodeStatus({})
+    setActiveEdge(null)
     setLogs(['[Socket] Emitting execute event for workflow wf_demo_01...'])
 
-    // 1. Webhook fires
+    // 1. Webhook runs
     setTimeout(() => {
       setNodeStatus((s) => ({ ...s, webhook: 'running' }))
-      setLogs((l) => [...l, '[0ms] Webhook received incoming payload: { lead: "Acme Corp", score: 92 }'])
-    }, 250)
+      setLogs((l) => [...l, '[0ms] Webhook received payload: { lead: "Acme Corp", score: 92 }'])
+    }, 200)
 
     setTimeout(() => {
       setNodeStatus((s) => ({ ...s, webhook: 'completed' }))
+      // Data flows along Edge 1 to Switch
+      setActiveEdge('edge1')
+      setLogs((l) => [...l, '[18ms] Data flowing from Webhook output → Switch input'])
     }, 700)
 
     // 2. Switch condition evaluates
     setTimeout(() => {
       setNodeStatus((s) => ({ ...s, switch: 'running' }))
-      setLogs((l) => [...l, '[22ms] Evaluating Switch node: score (92) >= 80 -> TRUE'])
-    }, 900)
+      setLogs((l) => [...l, '[35ms] Evaluating Switch: score (92) >= 80 -> TRUE'])
+    }, 1200)
 
     setTimeout(() => {
       setNodeStatus((s) => ({ ...s, switch: 'completed', archive: 'skipped' }))
-      setLogs((l) => [...l, '[45ms] False branch pruned: "Cold Storage" node marked as SKIPPED'])
-    }, 1400)
+      // Data flows along True branch to AI Agent
+      setActiveEdge('edge2')
+      setLogs((l) => [...l, '[52ms] True branch active → routing output into AI Agent input'])
+      setLogs((l) => [...l, '[54ms] False branch pruned: "Cold Storage" marked as SKIPPED'])
+    }, 1800)
 
     // 3. AI Agent runs
     setTimeout(() => {
       setNodeStatus((s) => ({ ...s, ai: 'running' }))
       setLogs((l) => [...l, '[110ms] AI Agent invoking model with customer context...'])
-    }, 1600)
+    }, 2400)
 
     setTimeout(() => {
       setNodeStatus((s) => ({ ...s, ai: 'completed' }))
-      setLogs((l) => [...l, '[480ms] AI Agent output generated: "High priority lead alert draft ready"'])
-    }, 2400)
+      // Data flows to Slack
+      setActiveEdge('edge4')
+      setLogs((l) => [...l, '[420ms] AI Agent output ready → routing payload into Slack input'])
+    }, 3100)
 
     // 4. Slack posts
     setTimeout(() => {
       setNodeStatus((s) => ({ ...s, slack: 'running' }))
-    }, 2600)
+    }, 3600)
 
     setTimeout(() => {
       setNodeStatus((s) => ({ ...s, slack: 'completed' }))
-      setLogs((l) => [...l, '[512ms] Slack message delivered to #vip-deals. Workflow finished successfully.'])
+      setActiveEdge(null)
+      setLogs((l) => [...l, '[475ms] Slack message delivered to #vip-deals. Workflow complete.'])
       setRunning(false)
-    }, 3100)
+    }, 4200)
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-orange-500/20 bg-neutral-950/80 shadow-2xl backdrop-blur-xl">
+    <div className="relative overflow-hidden rounded-2xl border border-orange-500/25 bg-neutral-950/90 shadow-2xl backdrop-blur-xl">
       {/* Canvas Top Bar */}
       <div className="flex flex-wrap items-center justify-between border-b border-neutral-800 bg-neutral-900/60 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
@@ -214,17 +228,17 @@ function InteractiveFlowCanvas() {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 font-mono text-[11px] text-neutral-400">
-            <Radio className="size-3 text-emerald-500" />
-            <span>WebSocket Connected</span>
+            <Radio className="size-3 text-emerald-500 animate-pulse" />
+            <span>WebSocket Live Stream</span>
           </div>
           <button
             onClick={triggerExecution}
             disabled={running}
-            className="flex items-center gap-2 rounded-lg bg-orange-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-500 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-orange-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md shadow-orange-600/30 transition hover:bg-orange-500 disabled:opacity-50"
           >
             {running ? (
               <>
-                <LoaderCircle className="size-3.5 animate-spin" /> Executing...
+                <LoaderCircle className="size-3.5 animate-spin" /> Executing DAG...
               </>
             ) : (
               <>
@@ -235,22 +249,93 @@ function InteractiveFlowCanvas() {
         </div>
       </div>
 
-      {/* Interactive Node Graph */}
-      <div className="relative min-h-[300px] overflow-x-auto p-4 sm:p-6">
-        <div className="relative min-w-[880px]">
-          {/* SVG connecting lines */}
-          <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-            {/* Webhook -> Switch */}
-            <path d="M 180 144 C 215 144, 215 144, 250 144" fill="none" stroke="#3f3f46" strokeWidth={1.5} />
-            {/* Switch -> AI (True branch) */}
-            <path d="M 410 144 C 445 144, 445 74, 480 74" fill="none" stroke="#ea580c" strokeWidth={1.5} />
-            {/* Switch -> Archive (False branch) */}
-            <path d="M 410 144 C 445 144, 445 214, 480 214" fill="none" stroke="#27272a" strokeWidth={1.5} strokeDasharray="4 4" />
-            {/* AI -> Slack */}
-            <path d="M 640 74 C 675 74, 675 74, 710 74" fill="none" stroke="#3f3f46" strokeWidth={1.5} />
+      {/* Interactive Node Graph Area */}
+      <div className="relative overflow-x-auto p-6 sm:p-8">
+        <div className="relative h-[290px] min-w-[940px] select-none">
+          {/* SVG Connecting Edges & Animated Flowing Data Dots */}
+          <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 940 290" aria-hidden="true">
+            <defs>
+              <filter id="dot-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* EDGE 1: Webhook (180, 145) -> Switch (260, 145) */}
+            <path
+              id="path-edge1"
+              d="M 180 145 C 220 145, 220 145, 260 145"
+              fill="none"
+              stroke={activeEdge === 'edge1' ? '#f97316' : '#3f3f46'}
+              strokeWidth={activeEdge === 'edge1' ? 2.5 : 1.75}
+              className="transition-colors duration-300"
+            />
+            {/* Animated data dot traveling from Webhook output to Switch input */}
+            <circle r="4.5" fill="#fb923c" filter="url(#dot-glow)">
+              <animateMotion
+                path="M 180 145 C 220 145, 220 145, 260 145"
+                dur={activeEdge === 'edge1' ? '0.8s' : '2.2s'}
+                repeatCount="indefinite"
+              />
+            </circle>
+
+            {/* EDGE 2: Switch True Output (420, 130) -> AI Agent Input (500, 70) */}
+            <path
+              id="path-edge2"
+              d="M 420 130 C 460 130, 460 70, 500 70"
+              fill="none"
+              stroke={activeEdge === 'edge2' ? '#f97316' : '#ea580c'}
+              strokeWidth={activeEdge === 'edge2' ? 2.5 : 1.75}
+              className="transition-colors duration-300"
+            />
+            <text x="450" y="92" fill="#10b981" fontSize="10" fontFamily="monospace" fontWeight="bold">
+              [TRUE]
+            </text>
+            {/* Animated data dot traveling from Switch TRUE output to AI Agent input */}
+            <circle r="4.5" fill="#fb923c" filter="url(#dot-glow)">
+              <animateMotion
+                path="M 420 130 C 460 130, 460 70, 500 70"
+                dur={activeEdge === 'edge2' ? '0.8s' : '2.6s'}
+                repeatCount="indefinite"
+              />
+            </circle>
+
+            {/* EDGE 3: Switch False Output (420, 160) -> Cold Storage Input (500, 220) */}
+            <path
+              id="path-edge3"
+              d="M 420 160 C 460 160, 460 220, 500 220"
+              fill="none"
+              stroke="#27272a"
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+            />
+            <text x="446" y="196" fill="#71717a" fontSize="10" fontFamily="monospace">
+              [FALSE]
+            </text>
+
+            {/* EDGE 4: AI Agent Output (660, 70) -> Slack Input (740, 70) */}
+            <path
+              id="path-edge4"
+              d="M 660 70 C 700 70, 700 70, 740 70"
+              fill="none"
+              stroke={activeEdge === 'edge4' ? '#f97316' : '#3f3f46'}
+              strokeWidth={activeEdge === 'edge4' ? 2.5 : 1.75}
+              className="transition-colors duration-300"
+            />
+            {/* Animated data dot traveling from AI Agent output to Slack input */}
+            <circle r="4.5" fill="#fb923c" filter="url(#dot-glow)">
+              <animateMotion
+                path="M 660 70 C 700 70, 700 70, 740 70"
+                dur={activeEdge === 'edge4' ? '0.8s' : '2.4s'}
+                repeatCount="indefinite"
+              />
+            </circle>
           </svg>
 
-          {/* Render Nodes */}
+          {/* Render Actual Node Cards With Visible Connectors */}
           {FLOW_NODES.map((n) => {
             const Icon = n.icon
             const st = nodeStatus[n.id] || 'idle'
@@ -261,31 +346,83 @@ function InteractiveFlowCanvas() {
             let statusColor = 'text-neutral-500'
 
             if (st === 'running') {
-              border = 'border-orange-500 ring-2 ring-orange-500/20'
+              border = 'border-orange-500 ring-2 ring-orange-500/25'
               bg = 'bg-neutral-900'
               statusText = 'Running...'
               statusColor = 'text-orange-400'
             } else if (st === 'completed') {
-              border = 'border-emerald-500/80'
+              border = 'border-emerald-500/80 shadow-emerald-500/10'
               bg = 'bg-neutral-900'
               statusText = 'Completed'
               statusColor = 'text-emerald-400'
             } else if (st === 'skipped') {
-              border = 'border-neutral-800 opacity-40'
+              border = 'border-neutral-800/80 opacity-35'
               bg = 'bg-neutral-950'
               statusText = 'Skipped'
               statusColor = 'text-neutral-500'
             }
 
+            const isSwitch = n.id === 'switch'
+            const isWebhook = n.id === 'webhook'
+            const isEnd = n.id === 'slack' || n.id === 'archive'
+
             return (
               <div
                 key={n.id}
-                style={{ left: `${n.x}px`, top: `${n.y}px` }}
-                className={`absolute flex w-[160px] items-center gap-3 rounded-xl border p-3 shadow-lg transition-all duration-300 ${border} ${bg}`}
+                style={{
+                  left: `${n.x}px`,
+                  top: `${n.y}px`,
+                  width: `${n.width}px`,
+                  height: `${n.height}px`,
+                }}
+                className={`absolute flex items-center gap-3 rounded-xl border p-3 shadow-xl transition-all duration-300 ${border} ${bg}`}
               >
-                <div className={`grid size-9 shrink-0 place-items-center rounded-lg ${st === 'running' ? 'bg-orange-500/20 text-orange-400' : st === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-neutral-800 text-neutral-300'}`}>
+                {/* Input Handle Port on Left (except root webhook trigger) */}
+                {!isWebhook && (
+                  <span
+                    className="absolute -left-2 top-1/2 -translate-y-1/2 size-3.5 rounded-full border-2 border-neutral-950 bg-orange-500 shadow-sm transition hover:scale-125"
+                    title="Input Port"
+                  />
+                )}
+
+                {/* Output Handle Port on Right */}
+                {!isEnd && !isSwitch && (
+                  <span
+                    className="absolute -right-2 top-1/2 -translate-y-1/2 size-3.5 rounded-full border-2 border-neutral-950 bg-orange-500 shadow-sm transition hover:scale-125"
+                    title="Output Port"
+                  />
+                )}
+
+                {/* For Switch: Dual Output Ports (True top, False bottom) */}
+                {isSwitch && (
+                  <>
+                    <span
+                      style={{ top: '20px' }}
+                      className="absolute -right-2 size-3.5 rounded-full border-2 border-neutral-950 bg-emerald-500 shadow-sm"
+                      title="True Output Branch"
+                    />
+                    <span
+                      style={{ top: '50px' }}
+                      className="absolute -right-2 size-3.5 rounded-full border-2 border-neutral-950 bg-neutral-600 shadow-sm"
+                      title="False Output Branch"
+                    />
+                  </>
+                )}
+
+                {/* Node Icon */}
+                <div
+                  className={`grid size-9 shrink-0 place-items-center rounded-lg ${
+                    st === 'running'
+                      ? 'bg-orange-500/20 text-orange-400'
+                      : st === 'completed'
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-neutral-800 text-neutral-300'
+                  }`}
+                >
                   <Icon className="size-4" />
                 </div>
+
+                {/* Node Content */}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-xs font-semibold text-neutral-100">{n.title}</div>
                   <div className="truncate font-mono text-[10px] text-neutral-400">{n.subtitle}</div>
@@ -302,12 +439,12 @@ function InteractiveFlowCanvas() {
       {/* Real-time Execution Output Terminal */}
       <div className="border-t border-neutral-800/80 bg-neutral-950 px-4 py-3 font-mono text-xs text-neutral-300">
         <div className="mb-2 flex items-center justify-between text-neutral-500">
-          <span className="text-[11px] uppercase tracking-wider">Live WebSocket Output</span>
-          <span>NestJS Execution Engine</span>
+          <span className="text-[11px] uppercase tracking-wider">WebSocket Event Stream</span>
+          <span>NestJS DAG Worker</span>
         </div>
         <div className="min-h-[56px] space-y-1">
           {logs.length === 0 ? (
-            <div className="text-neutral-500 italic">Click &quot;Run Workflow&quot; above to trigger live DAG topological execution.</div>
+            <div className="text-neutral-500 italic">Click &quot;Run Workflow&quot; above to watch real-time data packets stream from output to input.</div>
           ) : (
             logs.map((log, i) => (
               <div key={i} className="leading-relaxed">
