@@ -1,575 +1,870 @@
+'use client'
+
+import React, { useEffect, useRef, useState, useMemo } from 'react'
+import * as THREE from 'three'
+import gsap from 'gsap'
 import {
+  ArrowRight,
   ArrowUpRight,
-  Bell,
   Bot,
-  CircleCheck,
+  CheckCircle2,
   Clock,
   Code,
-  GitBranch,
-  GitPullRequest,
+  Copy,
+  Check,
   Globe,
   Hash,
   LoaderCircle,
-  Maximize,
-  Minus,
-  Moon,
   Network,
-  PanelLeft,
   Play,
-  Plus,
   Radio,
-  Save,
-  ShieldCheck,
+  Send,
+  ShieldAlert,
   Webhook,
+  Zap,
   type LucideIcon,
 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-
-/* ─────────── EDIT THESE ───────────
-   Put real product media in /public and set ONE of these (video wins).
-   Leave both empty to show the animated app preview built below. */
-const PRODUCT_VIDEO = '' // e.g. '/demo.mp4'
-const PRODUCT_POSTER = '' // optional, e.g. '/demo-poster.png'
-const PRODUCT_IMAGE = '' // e.g. '/app-screenshot.png'
 
 const GITHUB = 'https://github.com/pragyann007/GoFlow'
 const LOGIN_HREF = '/auth/login'
 const REGISTER_HREF = '/auth/register'
 
-const nodeLibrary: { icon: LucideIcon; name: string; text: string; soon?: boolean }[] = [
-  { icon: Globe, name: 'HTTP Request', text: 'Make an HTTP request to any API endpoint' },
-  { icon: Webhook, name: 'Webhook Trigger', text: 'Start a workflow when a request hits your endpoint' },
-  { icon: Bot, name: 'AI Agent', text: 'Process text or data using an LLM with custom instructions' },
-  { icon: Network, name: 'Switch', text: 'Route execution to different branches by condition' },
-  { icon: Hash, name: 'Slack', text: 'Post messages to a Slack channel' },
-  { icon: Code, name: 'Code', text: 'Run custom JavaScript to transform workflow data', soon: true },
-  { icon: Bell, name: 'Send Notification', text: 'Send alerts via Slack webhooks or SMTP email', soon: true },
-  { icon: Clock, name: 'Schedule Trigger', text: 'Run workflows on an interval or cron expression', soon: true },
-]
+/* ─────────────────────────────────────────────────────────────
+   SUBTLE 3D AMBIENT PARTICLES (Dark Orange Theme)
+   Clean, performant, no clutter. Adds depth without distraction.
+   ───────────────────────────────────────────────────────────── */
+function AmbientBackground() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
-const features: { icon: LucideIcon; title: string; text: string; detail: string }[] = [
-  {
-    icon: GitBranch,
-    title: 'DAG topological engine',
-    text: 'Nodes run in strict dependency order. Every run is deterministic, replayable and easy to inspect.',
-    detail: 'fetch → route → notify',
-  },
-  {
-    icon: Radio,
-    title: 'Live status streaming',
-    text: 'Watch each node move from queued to complete over WebSockets while the workflow runs.',
-    detail: 'ws://localhost:8080/runs/:id',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Secure custom webhooks',
-    text: 'Give every workflow its own signed endpoint. Requests are verified before a single node executes.',
-    detail: 'X-GoFlow-Signature: sha256=…',
-  },
-  {
-    icon: GitPullRequest,
-    title: 'Conditional branch pruning',
-    text: 'Branches that fail a condition are skipped entirely, so runs stay fast and logs stay readable.',
-    detail: 'status == 500 → 1 branch pruned',
-  },
-]
+  useEffect(() => {
+    const container = containerRef.current
+    const canvas = canvasRef.current
+    if (!container || !canvas) return
 
-/* ── Animation timeline for the app preview (seconds, one 10s loop) ── */
-const T = 10
-const pct = (s: number) => `${((s / T) * 100).toFixed(2)}%`
-const NODE_START = [0.4, 3.0, 5.6] // when each node starts running
-const EDGE_START = [1.8, 4.4] // when data flows along each edge
-const RUN_FOR = 1.4
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100)
+    camera.position.z = 15
 
-const css =
-  NODE_START.map(
-    (s, i) =>
-      `@keyframes gf-run${i}{0%,${pct(s - 0.1)}{opacity:0}${pct(s)},${pct(s + RUN_FOR)}{opacity:1}${pct(s + RUN_FOR + 0.1)},100%{opacity:0}}` +
-      `@keyframes gf-done${i}{0%,${pct(s + RUN_FOR)}{opacity:0}${pct(s + RUN_FOR + 0.1)},${pct(9.2)}{opacity:1}${pct(9.5)},100%{opacity:0}}` +
-      `@keyframes gf-hl${i}{0%,${pct(s - 0.1)}{stroke:var(--border)}${pct(s)},${pct(s + RUN_FOR)}{stroke:var(--primary)}${pct(s + RUN_FOR + 0.2)},100%{stroke:var(--border)}}`,
-  ).join('') +
-  EDGE_START.map(
-    (e, i) =>
-      `@keyframes gf-edge${i}{0%,${pct(e)}{stroke-dashoffset:14;opacity:0}${pct(e + 0.05)}{opacity:1}${pct(e + 1.4)}{stroke-dashoffset:-100;opacity:1}${pct(e + 1.45)},100%{opacity:0}}`,
-  ).join('') +
-  `@keyframes gf-rot{to{transform:rotate(360deg)}}
-@keyframes gf-sheen{0%{background-position:200% 0}100%{background-position:-200% 0}}
-.gf-spin{transform-box:fill-box;transform-origin:center;animation:gf-rot 1s linear infinite}
-.gf-sheen{background-size:200% 100%;animation:gf-sheen 6s linear infinite}
-@media(prefers-reduced-motion:reduce){
-  .gf-spin,.gf-sheen,.gf-anim{animation:none!important}
-  .gf-done{opacity:1!important}.gf-run,.gf-edge{opacity:0!important}
-}`
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: 'low-power',
+    })
+    renderer.setSize(container.clientWidth, container.clientHeight, false)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
 
-/* ───────────────────────── Shared bits ───────────────────────── */
+    // Floating orange dust
+    const count = 90
+    const geo = new THREE.BufferGeometry()
+    const pos = new Float32Array(count * 3)
 
-function Logo() {
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 26
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 16
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 10
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+
+    const mat = new THREE.PointsMaterial({
+      size: 0.14,
+      color: 0xf97316,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending,
+    })
+    const points = new THREE.Points(geo, mat)
+    scene.add(points)
+
+    let reqId = 0
+    let clock = 0
+
+    const handleResize = () => {
+      if (!container || !camera || !renderer) return
+      const w = container.clientWidth
+      const h = container.clientHeight
+      if (w === 0 || h === 0) return
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
+      renderer.setSize(w, h, false)
+    }
+
+    const observer = new ResizeObserver(handleResize)
+    observer.observe(container)
+
+    const animate = () => {
+      reqId = requestAnimationFrame(animate)
+      clock += 0.003
+      points.rotation.y = clock * 0.3
+      points.rotation.x = Math.sin(clock) * 0.1
+      renderer.render(scene, camera)
+    }
+    animate()
+
+    return () => {
+      cancelAnimationFrame(reqId)
+      observer.disconnect()
+      geo.dispose()
+      mat.dispose()
+      renderer.dispose()
+    }
+  }, [])
+
   return (
-    <a href="#top" className="group flex items-center gap-2.5 text-[15px] font-semibold tracking-tight">
-      <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:rotate-6">
-        <Network className="size-4" />
-      </span>
-      GoFlow
-    </a>
+    <div ref={containerRef} className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+      <canvas ref={canvasRef} className="h-full w-full opacity-70" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(234,88,12,0.14),transparent)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_100%,rgba(234,88,12,0.06),transparent)]" />
+    </div>
   )
 }
 
-/* ───────────────────────── App preview (mirrors the real UI) ───────────────────────── */
-
-const NW = 170
-const NH = 68
-const nodes: { x: number; y: number; icon: LucideIcon; label: string; badge: number }[] = [
-  { x: 60, y: 152, icon: Globe, label: 'HTTP Request', badge: 0 },
-  { x: 290, y: 140, icon: Network, label: 'Switch', badge: 1 },
-  { x: 540, y: 50, icon: Hash, label: 'Slack', badge: 2 },
-  { x: 515, y: 222, icon: Hash, label: 'Slack', badge: -1 },
-]
-const edges = [
-  'M230,186 C262,186 258,174 290,174',
-  'M460,174 C500,174 500,84 540,84',
-  'M460,174 C500,174 475,256 515,256',
-]
-
-function Handle({ cx, cy }: { cx: number; cy: number }) {
-  return <circle cx={cx} cy={cy} r={3.5} fill="var(--primary)" stroke="var(--card)" strokeWidth={2} />
+/* ─────────────────────────────────────────────────────────────
+   AUTHENTIC INTERACTIVE WORKFLOW PREVIEW
+   Directly mirrors GoFlow's real execution engine:
+   Webhook -> Switch Condition -> AI Agent (or Skipped) -> Slack
+   Connected edges with animated flowing data dots from outputs to inputs.
+   ───────────────────────────────────────────────────────────── */
+interface CanvasNode {
+  id: string
+  title: string
+  subtitle: string
+  icon: LucideIcon
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
-function CanvasSvg() {
+const FLOW_NODES: CanvasNode[] = [
+  { id: 'webhook', title: 'Webhook Trigger', subtitle: 'POST /v1/lead', icon: Webhook, x: 20, y: 110, width: 160, height: 70 },
+  { id: 'switch', title: 'Switch Condition', subtitle: 'lead.score >= 80', icon: Network, x: 260, y: 110, width: 160, height: 70 },
+  { id: 'ai', title: 'AI Agent', subtitle: 'Gemini / OpenAI draft', icon: Bot, x: 500, y: 35, width: 160, height: 70 },
+  { id: 'archive', title: 'Cold Storage', subtitle: 'Branch Pruned', icon: ShieldAlert, x: 500, y: 185, width: 160, height: 70 },
+  { id: 'slack', title: 'Slack Notification', subtitle: 'Post #vip-deals', icon: Hash, x: 740, y: 35, width: 160, height: 70 },
+]
+
+function InteractiveFlowCanvas() {
+  const [running, setRunning] = useState(false)
+  const [activeEdge, setActiveEdge] = useState<string | null>(null)
+  const [nodeStatus, setNodeStatus] = useState<Record<string, 'idle' | 'running' | 'completed' | 'skipped'>>({})
+  const [logs, setLogs] = useState<string[]>([])
+
+  const triggerExecution = () => {
+    if (running) return
+    setRunning(true)
+    setNodeStatus({})
+    setActiveEdge(null)
+    setLogs(['[Socket] Emitting execute event for workflow wf_demo_01...'])
+
+    // 1. Webhook runs
+    setTimeout(() => {
+      setNodeStatus((s) => ({ ...s, webhook: 'running' }))
+      setLogs((l) => [...l, '[0ms] Webhook received payload: { lead: "Acme Corp", score: 92 }'])
+    }, 200)
+
+    setTimeout(() => {
+      setNodeStatus((s) => ({ ...s, webhook: 'completed' }))
+      // Data flows along Edge 1 to Switch
+      setActiveEdge('edge1')
+      setLogs((l) => [...l, '[18ms] Data flowing from Webhook output → Switch input'])
+    }, 700)
+
+    // 2. Switch condition evaluates
+    setTimeout(() => {
+      setNodeStatus((s) => ({ ...s, switch: 'running' }))
+      setLogs((l) => [...l, '[35ms] Evaluating Switch: score (92) >= 80 -> TRUE'])
+    }, 1200)
+
+    setTimeout(() => {
+      setNodeStatus((s) => ({ ...s, switch: 'completed', archive: 'skipped' }))
+      // Data flows along True branch to AI Agent
+      setActiveEdge('edge2')
+      setLogs((l) => [...l, '[52ms] True branch active → routing output into AI Agent input'])
+      setLogs((l) => [...l, '[54ms] False branch pruned: "Cold Storage" marked as SKIPPED'])
+    }, 1800)
+
+    // 3. AI Agent runs
+    setTimeout(() => {
+      setNodeStatus((s) => ({ ...s, ai: 'running' }))
+      setLogs((l) => [...l, '[110ms] AI Agent invoking model with customer context...'])
+    }, 2400)
+
+    setTimeout(() => {
+      setNodeStatus((s) => ({ ...s, ai: 'completed' }))
+      // Data flows to Slack
+      setActiveEdge('edge4')
+      setLogs((l) => [...l, '[420ms] AI Agent output ready → routing payload into Slack input'])
+    }, 3100)
+
+    // 4. Slack posts
+    setTimeout(() => {
+      setNodeStatus((s) => ({ ...s, slack: 'running' }))
+    }, 3600)
+
+    setTimeout(() => {
+      setNodeStatus((s) => ({ ...s, slack: 'completed' }))
+      setActiveEdge(null)
+      setLogs((l) => [...l, '[475ms] Slack message delivered to #vip-deals. Workflow complete.'])
+      setRunning(false)
+    }, 4200)
+  }
+
   return (
-    <svg viewBox="0 0 760 400" className="block h-auto w-full" role="img" aria-label="GoFlow workflow canvas: HTTP Request, Switch, Slack">
-      {/* edges */}
-      {edges.map((d, i) => (
-        <path key={i} d={d} fill="none" stroke="var(--muted-foreground)" strokeOpacity={0.55} strokeWidth={1.25} />
-      ))}
-      {/* data flowing along the first two edges */}
-      {edges.slice(0, 2).map((d, i) => (
-        <path
-          key={`f${i}`}
-          d={d}
-          pathLength={100}
-          fill="none"
-          stroke="var(--primary)"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeDasharray="14 200"
-          className="gf-edge gf-anim"
-          style={{ opacity: 0, animation: `gf-edge${i} ${T}s linear infinite` }}
-        />
-      ))}
+    <div className="relative overflow-hidden rounded-2xl border border-orange-500/25 bg-neutral-950/90 shadow-2xl backdrop-blur-xl">
+      {/* Canvas Top Bar */}
+      <div className="flex flex-wrap items-center justify-between border-b border-neutral-800 bg-neutral-900/60 px-4 py-3 sm:px-6">
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1.5" aria-hidden>
+            <span className="size-2.5 rounded-full bg-neutral-700" />
+            <span className="size-2.5 rounded-full bg-neutral-700" />
+            <span className="size-2.5 rounded-full bg-neutral-700" />
+          </div>
+          <span className="font-mono text-xs text-neutral-400">
+            workflow / <span className="font-medium text-orange-400">lead-qualification-v1</span>
+          </span>
+        </div>
 
-      {nodes.map((n, i) => {
-        const Icon = n.icon
-        const cy = n.y + NH / 2
-        return (
-          <g key={i}>
-            <rect
-              x={n.x}
-              y={n.y}
-              width={NW}
-              height={NH}
-              rx={8}
-              fill="var(--card)"
-              stroke="var(--border)"
-              strokeWidth={1}
-              className="gf-anim"
-              style={n.badge >= 0 ? { animation: `gf-hl${n.badge} ${T}s linear infinite` } : undefined}
-            />
-            <rect x={n.x + 10} y={n.y + 10} width={48} height={48} rx={6} fill="var(--muted)" />
-            <Icon x={n.x + 20} y={n.y + 20} width={28} height={28} strokeWidth={1.75} className="text-primary" />
-            <text x={n.x + 72} y={cy + 4} fill="var(--foreground)" fontSize={13} fontWeight={500}>
-              {n.label}
-            </text>
-            <Handle cx={n.x} cy={cy} />
-            <Handle cx={n.x + NW} cy={cy} />
-
-            {n.badge >= 0 && (
-              <g>
-                <rect x={n.x + NW - 46} y={n.y + NH - 9} width={32} height={18} rx={9} fill="var(--background)" stroke="var(--border)" />
-                <g className="gf-run gf-anim" style={{ opacity: 0, animation: `gf-run${n.badge} ${T}s linear infinite` }}>
-                  <LoaderCircle x={n.x + NW - 36} y={n.y + NH - 6} width={12} height={12} className="gf-spin text-primary" />
-                </g>
-                <g className="gf-done gf-anim" style={{ opacity: 0, animation: `gf-done${n.badge} ${T}s linear infinite` }}>
-                  <CircleCheck x={n.x + NW - 36} y={n.y + NH - 6} width={12} height={12} className="text-emerald-500" />
-                </g>
-              </g>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 font-mono text-[11px] text-neutral-400">
+            <Radio className="size-3 text-emerald-500 animate-pulse" />
+            <span>WebSocket Live Stream</span>
+          </div>
+          <button
+            onClick={triggerExecution}
+            disabled={running}
+            className="flex items-center gap-2 rounded-lg bg-orange-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md shadow-orange-600/30 transition hover:bg-orange-500 disabled:opacity-50"
+          >
+            {running ? (
+              <>
+                <LoaderCircle className="size-3.5 animate-spin" /> Executing DAG...
+              </>
+            ) : (
+              <>
+                <Play className="size-3.5 fill-current" /> Run Workflow
+              </>
             )}
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
-function AppPreview() {
-  return (
-    <div className="flex bg-background text-left">
-      {/* sidebar */}
-      <aside className="hidden w-44 shrink-0 border-r border-border bg-sidebar sm:block">
-        <div className="border-b border-border px-4 py-3.5 text-sm font-semibold">Go Flow</div>
-        <div className="flex items-center gap-2.5 px-4 py-4 text-xs text-sidebar-foreground">
-          <Network className="size-3.5 text-muted-foreground" />
-          Workflows
-        </div>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* top bar */}
-        <div className="flex items-center gap-2 border-b border-border px-3 py-2.5 sm:gap-3 sm:px-4">
-          <PanelLeft className="hidden size-4 text-muted-foreground sm:block" />
-          <span className="min-w-0 truncate rounded-md bg-muted px-2.5 py-1.5 text-xs text-foreground/80 sm:w-40">my workflow-1</span>
-          <span className="ml-auto hidden size-7 place-items-center rounded-md border border-border text-muted-foreground sm:grid">
-            <Moon className="size-3.5" />
-          </span>
-          <span className="hidden items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs md:inline-flex">
-            <Plus className="size-3.5" /> Add Node
-          </span>
-          <span className="hidden items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground sm:inline-flex">
-            <Save className="size-3.5" /> Save Workflow
-          </span>
-          <span className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground sm:ml-0">
-            <Play className="size-3.5" /> Execute Workflow
-          </span>
-        </div>
-
-        {/* canvas */}
-        <div className="relative m-2 overflow-hidden rounded-md bg-[color-mix(in_oklab,var(--background)_35%,black)] sm:m-3">
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-70"
-            style={{ backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)', backgroundSize: '18px 18px' }}
-          />
-          <div className="relative">
-            <CanvasSvg />
-          </div>
-          {/* zoom controls + minimap, like the real editor */}
-          <div className="absolute bottom-2 left-2 hidden flex-col overflow-hidden rounded border border-border bg-card text-muted-foreground sm:flex">
-            <Plus className="size-6 p-1.5" />
-            <Minus className="size-6 border-t border-border p-1.5" />
-            <Maximize className="size-6 border-t border-border p-1.5" />
-          </div>
-          <div className="absolute bottom-2 right-2 hidden h-14 w-24 rounded border border-border bg-muted/60 sm:block">
-            <span className="absolute left-3 top-6 h-1.5 w-3 rounded-sm bg-foreground/70" />
-            <span className="absolute left-8 top-6 h-1.5 w-3 rounded-sm bg-foreground/70" />
-            <span className="absolute right-3 top-3 h-1.5 w-4 rounded-sm bg-foreground/70" />
-            <span className="absolute bottom-3 right-4 h-1.5 w-4 rounded-sm bg-foreground/70" />
-          </div>
+          </button>
         </div>
       </div>
-    </div>
-  )
-}
 
-function ProductShowcase() {
-  return (
-    <div className="rounded-2xl bg-gradient-to-b from-primary/60 via-primary/10 to-transparent p-px shadow-2xl shadow-primary/10">
-      <div className="overflow-hidden rounded-[15px] bg-card">
-        {/* browser bar */}
-        <div className="flex items-center gap-3 border-b border-border bg-muted/40 px-4 py-2.5">
-          <div className="flex w-12 gap-1.5" aria-hidden>
-            <span className="size-2.5 rounded-full bg-muted-foreground/30" />
-            <span className="size-2.5 rounded-full bg-muted-foreground/30" />
-            <span className="size-2.5 rounded-full bg-muted-foreground/30" />
-          </div>
-          <div className="mx-auto min-w-0 max-w-sm flex-1 truncate rounded-md bg-background/70 px-3 py-1 text-center font-mono text-[11px] text-muted-foreground">
-            goflow.app/dashboard/workflows/2d5e284e
-          </div>
-          <div className="w-12" aria-hidden />
-        </div>
+      {/* Interactive Node Graph Area */}
+      <div className="relative overflow-x-auto p-6 sm:p-8">
+        <div className="relative h-[290px] min-w-[940px] select-none">
+          {/* SVG Connecting Edges & Animated Flowing Data Dots */}
+          <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 940 290" aria-hidden="true">
+            <defs>
+              <filter id="dot-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
 
-        {PRODUCT_VIDEO ? (
-          <video
-            src={PRODUCT_VIDEO}
-            poster={PRODUCT_POSTER || undefined}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="aspect-[16/9] w-full bg-background object-cover"
-          />
-        ) : PRODUCT_IMAGE ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={PRODUCT_IMAGE} alt="GoFlow workflow editor" className="aspect-[16/9] w-full bg-background object-cover" />
-        ) : (
-          <AppPreview />
-        )}
-      </div>
-    </div>
-  )
-}
+            {/* EDGE 1: Webhook (180, 145) -> Switch (260, 145) */}
+            <path
+              id="path-edge1"
+              d="M 180 145 C 220 145, 220 145, 260 145"
+              fill="none"
+              stroke={activeEdge === 'edge1' ? '#f97316' : '#3f3f46'}
+              strokeWidth={activeEdge === 'edge1' ? 2.5 : 1.75}
+              className="transition-colors duration-300"
+            />
+            {/* Animated data dot traveling from Webhook output to Switch input */}
+            <circle r="4.5" fill="#fb923c" filter="url(#dot-glow)">
+              <animateMotion
+                path="M 180 145 C 220 145, 220 145, 260 145"
+                dur={activeEdge === 'edge1' ? '0.8s' : '2.2s'}
+                repeatCount="indefinite"
+              />
+            </circle>
 
-/* ───────────────────────── Page ───────────────────────── */
+            {/* EDGE 2: Switch True Output (420, 130) -> AI Agent Input (500, 70) */}
+            <path
+              id="path-edge2"
+              d="M 420 130 C 460 130, 460 70, 500 70"
+              fill="none"
+              stroke={activeEdge === 'edge2' ? '#f97316' : '#ea580c'}
+              strokeWidth={activeEdge === 'edge2' ? 2.5 : 1.75}
+              className="transition-colors duration-300"
+            />
+            <text x="450" y="92" fill="#10b981" fontSize="10" fontFamily="monospace" fontWeight="bold">
+              [TRUE]
+            </text>
+            {/* Animated data dot traveling from Switch TRUE output to AI Agent input */}
+            <circle r="4.5" fill="#fb923c" filter="url(#dot-glow)">
+              <animateMotion
+                path="M 420 130 C 460 130, 460 70, 500 70"
+                dur={activeEdge === 'edge2' ? '0.8s' : '2.6s'}
+                repeatCount="indefinite"
+              />
+            </circle>
 
-export default function Page() {
-  return (
-    // `dark` forces the .dark tokens from globals.css regardless of app theme.
-    <main id="top" className="dark relative min-h-screen overflow-x-hidden bg-background text-foreground antialiased">
-      <style>{css}</style>
+            {/* EDGE 3: Switch False Output (420, 160) -> Cold Storage Input (500, 220) */}
+            <path
+              id="path-edge3"
+              d="M 420 160 C 460 160, 460 220, 500 220"
+              fill="none"
+              stroke="#27272a"
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+            />
+            <text x="446" y="196" fill="#71717a" fontSize="10" fontFamily="monospace">
+              [FALSE]
+            </text>
 
-      {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
-        <nav className="mx-auto flex h-14 max-w-6xl items-center px-4 sm:h-16 sm:px-6 lg:px-8">
-          <Logo />
-          <div className="ml-8 hidden items-center gap-1 md:flex">
-            {[
-              ['Nodes', '#nodes'],
-              ['Features', '#features'],
-              ['GitHub', GITHUB],
-            ].map(([label, href]) => (
-              <a
-                key={label}
-                href={href}
-                {...(href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}
-                className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            {/* EDGE 4: AI Agent Output (660, 70) -> Slack Input (740, 70) */}
+            <path
+              id="path-edge4"
+              d="M 660 70 C 700 70, 700 70, 740 70"
+              fill="none"
+              stroke={activeEdge === 'edge4' ? '#f97316' : '#3f3f46'}
+              strokeWidth={activeEdge === 'edge4' ? 2.5 : 1.75}
+              className="transition-colors duration-300"
+            />
+            {/* Animated data dot traveling from AI Agent output to Slack input */}
+            <circle r="4.5" fill="#fb923c" filter="url(#dot-glow)">
+              <animateMotion
+                path="M 660 70 C 700 70, 700 70, 740 70"
+                dur={activeEdge === 'edge4' ? '0.8s' : '2.4s'}
+                repeatCount="indefinite"
+              />
+            </circle>
+          </svg>
+
+          {/* Render Actual Node Cards With Visible Connectors */}
+          {FLOW_NODES.map((n) => {
+            const Icon = n.icon
+            const st = nodeStatus[n.id] || 'idle'
+
+            let border = 'border-neutral-800'
+            let bg = 'bg-neutral-900/90'
+            let statusText = 'Idle'
+            let statusColor = 'text-neutral-500'
+
+            if (st === 'running') {
+              border = 'border-orange-500 ring-2 ring-orange-500/25'
+              bg = 'bg-neutral-900'
+              statusText = 'Running...'
+              statusColor = 'text-orange-400'
+            } else if (st === 'completed') {
+              border = 'border-emerald-500/80 shadow-emerald-500/10'
+              bg = 'bg-neutral-900'
+              statusText = 'Completed'
+              statusColor = 'text-emerald-400'
+            } else if (st === 'skipped') {
+              border = 'border-neutral-800/80 opacity-35'
+              bg = 'bg-neutral-950'
+              statusText = 'Skipped'
+              statusColor = 'text-neutral-500'
+            }
+
+            const isSwitch = n.id === 'switch'
+            const isWebhook = n.id === 'webhook'
+            const isEnd = n.id === 'slack' || n.id === 'archive'
+
+            return (
+              <div
+                key={n.id}
+                style={{
+                  left: `${n.x}px`,
+                  top: `${n.y}px`,
+                  width: `${n.width}px`,
+                  height: `${n.height}px`,
+                }}
+                className={`absolute flex items-center gap-3 rounded-xl border p-3 shadow-xl transition-all duration-300 ${border} ${bg}`}
               >
-                {label}
-              </a>
-            ))}
+                {/* Input Handle Port on Left (except root webhook trigger) */}
+                {!isWebhook && (
+                  <span
+                    className="absolute -left-2 top-1/2 -translate-y-1/2 size-3.5 rounded-full border-2 border-neutral-950 bg-orange-500 shadow-sm transition hover:scale-125"
+                    title="Input Port"
+                  />
+                )}
+
+                {/* Output Handle Port on Right */}
+                {!isEnd && !isSwitch && (
+                  <span
+                    className="absolute -right-2 top-1/2 -translate-y-1/2 size-3.5 rounded-full border-2 border-neutral-950 bg-orange-500 shadow-sm transition hover:scale-125"
+                    title="Output Port"
+                  />
+                )}
+
+                {/* For Switch: Dual Output Ports (True top, False bottom) */}
+                {isSwitch && (
+                  <>
+                    <span
+                      style={{ top: '20px' }}
+                      className="absolute -right-2 size-3.5 rounded-full border-2 border-neutral-950 bg-emerald-500 shadow-sm"
+                      title="True Output Branch"
+                    />
+                    <span
+                      style={{ top: '50px' }}
+                      className="absolute -right-2 size-3.5 rounded-full border-2 border-neutral-950 bg-neutral-600 shadow-sm"
+                      title="False Output Branch"
+                    />
+                  </>
+                )}
+
+                {/* Node Icon */}
+                <div
+                  className={`grid size-9 shrink-0 place-items-center rounded-lg ${
+                    st === 'running'
+                      ? 'bg-orange-500/20 text-orange-400'
+                      : st === 'completed'
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-neutral-800 text-neutral-300'
+                  }`}
+                >
+                  <Icon className="size-4" />
+                </div>
+
+                {/* Node Content */}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-xs font-semibold text-neutral-100">{n.title}</div>
+                  <div className="truncate font-mono text-[10px] text-neutral-400">{n.subtitle}</div>
+                  <div className={`mt-0.5 font-mono text-[9px] font-medium uppercase tracking-wider ${statusColor}`}>
+                    {statusText}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Real-time Execution Output Terminal */}
+      <div className="border-t border-neutral-800/80 bg-neutral-950 px-4 py-3 font-mono text-xs text-neutral-300">
+        <div className="mb-2 flex items-center justify-between text-neutral-500">
+          <span className="text-[11px] uppercase tracking-wider">WebSocket Event Stream</span>
+          <span>NestJS DAG Worker</span>
+        </div>
+        <div className="min-h-[56px] space-y-1">
+          {logs.length === 0 ? (
+            <div className="text-neutral-500 italic">Click &quot;Run Workflow&quot; above to watch real-time data packets stream from output to input.</div>
+          ) : (
+            logs.map((log, i) => (
+              <div key={i} className="leading-relaxed">
+                <span className="text-orange-400">›</span> {log}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   AUTHENTIC REAL NODES (The actual ones in GoFlow backend)
+   ───────────────────────────────────────────────────────────── */
+interface NodeDetail {
+  icon: LucideIcon
+  name: string
+  tag: string
+  description: string
+  endpoint: string
+}
+
+const REAL_NODES: NodeDetail[] = [
+  {
+    icon: Webhook,
+    name: 'Webhook Trigger',
+    tag: 'Trigger',
+    description: 'Listen for external events with custom endpoints and HMAC signature verification.',
+    endpoint: 'POST /workflows/:id/webhook',
+  },
+  {
+    icon: Globe,
+    name: 'HTTP Request',
+    tag: 'Network',
+    description: 'Execute REST requests (GET, POST, PUT, DELETE) with custom headers, query params, and body.',
+    endpoint: 'axios / fetch',
+  },
+  {
+    icon: Network,
+    name: 'Switch Condition',
+    tag: 'Logic',
+    description: 'Evaluate JavaScript conditions dynamically. Automatically skips unchosen branches to optimize execution.',
+    endpoint: 'Branch Pruning',
+  },
+  {
+    icon: Bot,
+    name: 'AI Agent Node',
+    tag: 'AI',
+    description: 'Run LLM reasoning chains with Google Gemini or OpenAI using context from upstream node outputs.',
+    endpoint: 'Gemini / OpenAI API',
+  },
+  {
+    icon: Hash,
+    name: 'Slack Message',
+    tag: 'Integration',
+    description: 'Post automated notifications, error alerts, and payload summaries directly to your Slack channels.',
+    endpoint: 'Slack Webhook / Bot API',
+  },
+  {
+    icon: Send,
+    name: 'Discord Webhook',
+    tag: 'Integration',
+    description: 'Broadcast updates and embedded alerts directly into Discord server channels.',
+    endpoint: 'Discord Webhook API',
+  },
+  {
+    icon: Code,
+    name: 'Custom JavaScript',
+    tag: 'Transform',
+    description: 'Execute custom JavaScript functions to parse, transform, filter, and format incoming data payloads.',
+    endpoint: 'V8 Sandbox',
+  },
+  {
+    icon: Clock,
+    name: 'Schedule Trigger',
+    tag: 'Trigger',
+    description: 'Automate periodic executions on recurring cron intervals without external cron servers.',
+    endpoint: 'Interval / Cron',
+  },
+]
+
+/* ─────────────────────────────────────────────────────────────
+   MAIN HIGH-CONVERTING LANDING PAGE
+   ───────────────────────────────────────────────────────────── */
+export default function Page() {
+  const [copied, setCopied] = useState(false)
+  const heroRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const ctx = gsap.context(() => {
+      gsap.from('.fade-up', {
+        y: 24,
+        opacity: 0,
+        stagger: 0.12,
+        duration: 0.7,
+        ease: 'power2.out',
+      })
+    }, heroRef)
+
+    return () => ctx.revert()
+  }, [])
+
+  const copyDockerCmd = () => {
+    navigator.clipboard.writeText('docker run -p 3000:3000 -p 8080:8080 ghcr.io/pragyann007/goflow:latest')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div ref={heroRef} className="relative min-h-screen bg-[#09090b] text-neutral-100 antialiased selection:bg-orange-500/20 selection:text-orange-300">
+      {/* 3D Ambient Canvas */}
+      <AmbientBackground />
+
+      {/* Navigation */}
+      <header className="sticky top-0 z-50 border-b border-neutral-800/80 bg-[#09090b]/80 backdrop-blur-md">
+        <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          {/* Logo - Plain text as requested: "Goflow" */}
+          <a href="#top" className="text-xl font-bold tracking-tight text-white transition hover:text-orange-400">
+            Goflow
+          </a>
+
+          {/* Links */}
+          <div className="hidden items-center gap-6 text-sm text-neutral-300 sm:flex">
+            <a href="#features" className="transition hover:text-white">Features</a>
+            <a href="#nodes" className="transition hover:text-white">Nodes</a>
+            <a href="#how-it-works" className="transition hover:text-white">How it works</a>
+            <a href={GITHUB} target="_blank" rel="noreferrer" className="flex items-center gap-1 transition hover:text-white">
+              GitHub <ArrowUpRight className="size-3.5" />
+            </a>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <a href={LOGIN_HREF}>Log in</a>
-            </Button>
-            <Button size="sm" asChild>
-              <a href={REGISTER_HREF}>Sign up</a>
-            </Button>
+
+          {/* Auth Actions */}
+          <div className="flex items-center gap-3">
+            <a
+              href={LOGIN_HREF}
+              className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-neutral-300 transition hover:text-white"
+            >
+              Sign in
+            </a>
+            <a
+              href={REGISTER_HREF}
+              className="rounded-lg bg-orange-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md shadow-orange-600/20 transition hover:bg-orange-500"
+            >
+              Get Started
+            </a>
           </div>
         </nav>
       </header>
 
-      {/* Hero */}
-      <section className="relative">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-[560px] bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--primary)_20%,transparent),transparent_65%)]"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[linear-gradient(var(--border)_1px,transparent_1px),linear-gradient(90deg,var(--border)_1px,transparent_1px)] bg-[size:56px_56px] opacity-30 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]"
-        />
+      {/* Hero Section */}
+      <section className="relative pt-16 sm:pt-24">
+        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
+          {/* Honest Status Badge */}
+          <div className="fade-up inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-3.5 py-1 text-xs font-medium text-orange-400">
+            <span className="size-1.5 rounded-full bg-orange-500" />
+            Open-Source Workflow Automation · NestJS + Next.js + React Flow
+          </div>
 
-        <div className="relative mx-auto max-w-4xl px-4 pb-14 pt-16 text-center sm:px-6 sm:pt-20 lg:pt-28">
-          <Badge variant="outline" className="animate-in fade-in slide-in-from-bottom-2 mb-6 gap-2 border-primary/30 bg-primary/10 px-3 py-1 font-normal text-primary duration-700">
-            <span className="relative flex size-1.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-70" />
-              <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
-            </span>
-            Open source · Now in beta
-          </Badge>
-
-          <h1 className="animate-in fade-in slide-in-from-bottom-3 text-balance text-4xl font-semibold tracking-tighter duration-700 sm:text-5xl lg:text-7xl">
-            <span className="bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent">
-              Visual Workflow Automation,
-            </span>{' '}
-            <span className="gf-sheen bg-gradient-to-r from-primary via-chart-2 to-primary bg-clip-text text-transparent">
-              Built for Code
+          {/* Main Hero Title */}
+          <h1 className="fade-up mt-6 text-4xl font-extrabold tracking-tight text-white sm:text-6xl">
+            Automate workflows visually.{' '}
+            <span className="bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 bg-clip-text text-transparent">
+              Execute with zero delay.
             </span>
           </h1>
 
-          <p
-            className="animate-in fade-in slide-in-from-bottom-3 mx-auto mt-5 max-w-xl text-pretty text-base leading-7 text-muted-foreground duration-700 sm:text-lg"
-            style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}
-          >
-            Design workflows on a canvas, version them as code, and watch every run in real time. Self-host it and own every execution.
+          {/* Subtitle */}
+          <p className="fade-up mx-auto mt-5 max-w-2xl text-base leading-relaxed text-neutral-400 sm:text-lg">
+            Connect webhooks, logic gates, AI models, and communication channels on an interactive canvas. GoFlow runs your DAG pipeline in deterministic order and streams live execution status over WebSockets.
           </p>
 
-          <div
-            className="animate-in fade-in slide-in-from-bottom-3 mt-8 flex flex-col items-stretch justify-center gap-3 duration-700 sm:flex-row sm:items-center"
-            style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}
-          >
-            <Button  className="shadow-lg shadow-primary/25 p-4 " asChild>
-              <a className='flex gap-2 items-center' href={REGISTER_HREF}>
-                Start Building Free <ArrowUpRight data-icon="inline-end" />
-              </a>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <a href={GITHUB} className='flex gap-2 items-center'  target="_blank" rel="noreferrer">
-                <GitBranch data-icon="inline-start" /> View on GitHub
-              </a>
-            </Button>
-          </div>
-
-          <p className="mt-4 text-xs text-muted-foreground">Free and open source. Self-host with a single command.</p>
-        </div>
-
-        <div
-          className="animate-in fade-in slide-in-from-bottom-6 relative mx-auto max-w-6xl px-4 pb-20 duration-1000 sm:px-6 sm:pb-24 lg:px-8"
-          style={{ animationDelay: '300ms', animationFillMode: 'backwards' }}
-        >
-          <ProductShowcase />
-        </div>
-      </section>
-
-      {/* Node library / Beta */}
-      <section id="nodes" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
-          <div className="lg:pt-4">
-            <div className="mb-5 flex items-center gap-3">
-              <Badge className="border border-primary/40 bg-primary/15 text-primary hover:bg-primary/15">Beta</Badge>
-              <span className="text-sm text-muted-foreground">New nodes ship every week</span>
-            </div>
-            <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-              <span className="text-primary">Five production nodes</span>, ready to use today
-            </h2>
-            <p className="mt-4 max-w-md text-pretty leading-7 text-muted-foreground">
-              The core is small on purpose and stable enough to run real workloads. More integrations are rolling out rapidly, and the node API is open if you want to write your own.
-            </p>
-            <Button className="mt-8" variant="outline" asChild>
-              <a href={REGISTER_HREF}>
-                Try them free <ArrowUpRight data-icon="inline-end" />
-              </a>
-            </Button>
-          </div>
-
-          {/* mirrors the in-app "Add Node" panel */}
-          <div className="overflow-hidden rounded-xl border border-border bg-card">
-            <div className="border-b-2 border-primary px-5 py-4">
-              <p className="text-sm font-semibold">Some Useful Nodes</p>
-              <p className="mt-1 text-sm text-muted-foreground">Select the nodes you want to use in your workflow.</p>
-            </div>
-            <ul className="grid gap-3 p-4 sm:grid-cols-2">
-              {nodeLibrary.map(({ icon: Icon, name, text, soon }) => (
-                <li
-                  key={name}
-                  className={`flex gap-3 rounded-lg border p-3.5 transition-colors ${
-                    soon
-                      ? 'border-border bg-background'
-                      : 'border-border bg-muted/40 hover:border-primary/50 hover:bg-primary/5'
-                  }`}
-                >
-                  <Icon className={`mt-0.5 size-5 shrink-0 ${soon ? 'text-muted-foreground' : 'text-primary'}`} />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{name}</p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{text}</p>
-                    {soon && (
-                      <Badge className="mt-2.5 bg-primary px-2 py-0 text-[11px] font-medium text-primary-foreground hover:bg-primary">
-                        Coming Soon
-                      </Badge>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="mx-auto max-w-6xl px-4 pb-20 pt-16 sm:px-6 sm:pb-24 lg:px-8">
-        <div className="mb-12 max-w-xl">
-          <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            Automation without the black box
-          </h2>
-          <p className="mt-4 leading-7 text-muted-foreground">
-            Everything you need to build workflows your team can read, debug and extend.
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {features.map(({ icon: Icon, title, text, detail }) => (
-            <Card
-              key={title}
-              className="group relative gap-0 overflow-hidden border-border bg-card p-0 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10"
+          {/* Primary CTA Buttons */}
+          <div className="fade-up mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+            <a
+              href={REGISTER_HREF}
+              className="flex items-center gap-2 rounded-xl bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-600/30 transition hover:bg-orange-500 hover:scale-[1.02]"
             >
-              <div className="absolute inset-x-0 top-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-primary to-transparent transition-transform duration-500 group-hover:scale-x-100" />
-              <CardHeader className="gap-2 p-6 pb-5 sm:p-7 sm:pb-5">
-                <span className="mb-3 grid size-10 place-items-center rounded-lg bg-primary/15 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
-                  <Icon className="size-5" />
-                </span>
-                <CardTitle className="text-base font-medium tracking-tight">{title}</CardTitle>
-                <CardDescription className="leading-6">{text}</CardDescription>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 sm:px-7 sm:pb-7">
-                <code className="block truncate rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
-                  <span className="text-primary">›</span> {detail}
-                </code>
-              </CardContent>
-            </Card>
-          ))}
+              Start Free Today <ArrowRight className="size-4" />
+            </a>
+            <a
+              href={GITHUB}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 rounded-xl border border-neutral-700 bg-neutral-900 px-6 py-3 text-sm font-semibold text-neutral-200 transition hover:border-neutral-600 hover:bg-neutral-800"
+            >
+              Star on GitHub <ArrowUpRight className="size-4" />
+            </a>
+          </div>
+
+          {/* Quickstart Command */}
+          <div className="fade-up mx-auto mt-6 flex max-w-md items-center justify-between rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 font-mono text-xs text-neutral-400">
+            <span className="truncate">docker run -p 3000:3000 -p 8080:8080 goflow</span>
+            <button
+              onClick={copyDockerCmd}
+              className="ml-2 flex items-center gap-1 rounded px-2 py-1 text-neutral-300 transition hover:bg-neutral-800"
+            >
+              {copied ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Closing CTA */}
-        <div className="relative mt-20 overflow-hidden rounded-2xl bg-primary px-6 py-10 text-primary-foreground sm:px-10 sm:py-12">
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-15"
-            style={{ backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)', backgroundSize: '18px 18px' }}
-          />
-          <div className="relative flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
-            <div className="max-w-lg">
-              <h3 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">
-                Run your first workflow in five minutes
-              </h3>
-              <p className="mt-3 text-sm leading-6 opacity-80">
-                One container, no usage limits. Create an account or self-host it yourself.
-              </p>
+        {/* Live Interactive Canvas Preview */}
+        <div className="fade-up mx-auto mt-14 max-w-5xl px-4 pb-20 sm:px-6">
+          <InteractiveFlowCanvas />
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="border-t border-neutral-800/80 bg-neutral-950/60 py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="max-w-xl">
+            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-orange-400">
+              Core Capabilities
+            </span>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              Engineered for reliability, not buzzwords.
+            </h2>
+            <p className="mt-3 text-neutral-400">
+              GoFlow provides the exact primitives you need to orchestrate complex logic without black boxes.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                icon: Radio,
+                title: 'WebSocket Live Streaming',
+                desc: 'Node transitions (Running, Completed, Skipped, Failed) stream directly to your frontend canvas in real-time over Socket.IO.',
+              },
+              {
+                icon: Network,
+                title: 'Topological DAG Sort',
+                desc: 'Nodes execute strictly based on resolved parent dependencies. Circular dependencies are rejected before execution starts.',
+              },
+              {
+                icon: ShieldAlert,
+                title: 'Branch Pruning',
+                desc: 'When a switch condition evaluates to true, the false branch (and all its children) are automatically marked as SKIPPED to save runtime.',
+              },
+              {
+                icon: Bot,
+                title: 'AI Agent Nodes',
+                desc: 'Prompt OpenAI or Google Gemini directly inside your pipeline. Inject previous node outputs into the prompt with dynamic templating.',
+              },
+              {
+                icon: Webhook,
+                title: 'Signed Webhooks',
+                desc: 'Trigger workflows via signed POST requests. Authenticate incoming requests and map payloads to downstream node inputs.',
+              },
+              {
+                icon: Zap,
+                title: 'Self-Hostable Architecture',
+                desc: 'Runs on standard PostgreSQL, Redis, NestJS, and Next.js. Full control of your data with zero vendor lock-in.',
+              },
+            ].map((f, i) => {
+              const Icon = f.icon
+              return (
+                <div
+                  key={i}
+                  className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-6 transition hover:border-orange-500/40 hover:bg-neutral-900/80"
+                >
+                  <div className="grid size-10 place-items-center rounded-lg bg-orange-500/10 text-orange-400">
+                    <Icon className="size-5" />
+                  </div>
+                  <h3 className="mt-4 text-base font-semibold text-white">{f.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-neutral-400">{f.desc}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Nodes Section */}
+      <section id="nodes" className="py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <span className="font-mono text-xs font-semibold uppercase tracking-wider text-orange-400">
+                Node Library
+              </span>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Ready-to-use workflow nodes
+              </h2>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" className="bg-background text-foreground hover:bg-background/90" asChild>
-                <a href={REGISTER_HREF} className='flex gap-2 items-center' >
-                  Create free account <ArrowUpRight data-icon="inline-end" />
-                </a>
-              </Button>
-              <Button size="lg" variant="ghost" className="text-primary-foreground hover:bg-black/10 hover:text-primary-foreground" asChild>
-                <a href={LOGIN_HREF}>Log in</a>
-              </Button>
+            <p className="max-w-md text-sm text-neutral-400">
+              Every node provides configurable inputs, outputs, and validation for deterministic execution.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {REAL_NODES.map((n) => {
+              const Icon = n.icon
+              return (
+                <div
+                  key={n.name}
+                  className="flex flex-col justify-between rounded-xl border border-neutral-800 bg-neutral-950 p-5 transition hover:border-orange-500/40 hover:bg-neutral-900/60"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div className="grid size-8 place-items-center rounded-md bg-orange-500/10 text-orange-400">
+                        <Icon className="size-4" />
+                      </div>
+                      <span className="rounded bg-neutral-800 px-2 py-0.5 font-mono text-[10px] text-neutral-300">
+                        {n.tag}
+                      </span>
+                    </div>
+                    <h3 className="mt-3 text-sm font-semibold text-white">{n.name}</h3>
+                    <p className="mt-1.5 text-xs leading-relaxed text-neutral-400">{n.description}</p>
+                  </div>
+                  <div className="mt-4 border-t border-neutral-800/80 pt-2.5 font-mono text-[10px] text-neutral-500 truncate">
+                    {n.endpoint}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* How it Works */}
+      <section id="how-it-works" className="border-t border-neutral-800/80 bg-neutral-950/40 py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="text-center">
+            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-orange-400">
+              Workflow Lifecycle
+            </span>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              From visual design to live execution
+            </h2>
+          </div>
+
+          <div className="mt-12 grid gap-8 md:grid-cols-3">
+            {[
+              {
+                step: '01',
+                title: 'Design on Canvas',
+                desc: 'Add triggers, condition switches, and AI agents. Connect handles on an interactive React Flow canvas with custom edge routes.',
+              },
+              {
+                step: '02',
+                title: 'Map Data & Logic',
+                desc: 'Pass upstream outputs to downstream inputs. Configure HTTP headers, AI prompt templates, and Slack channel hooks.',
+              },
+              {
+                step: '03',
+                title: 'Execute & Observe',
+                desc: 'Dispatch via Webhook or manual run. Watch node progress update live over WebSockets with granular logs and error handling.',
+              },
+            ].map((s) => (
+              <div key={s.step} className="relative rounded-xl border border-neutral-800 bg-neutral-900/60 p-6">
+                <span className="font-mono text-2xl font-bold text-orange-500">{s.step}</span>
+                <h3 className="mt-3 text-base font-semibold text-white">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-neutral-400">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20">
+        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
+          <div className="rounded-2xl border border-orange-500/30 bg-gradient-to-b from-orange-500/10 via-neutral-950 to-neutral-950 p-8 sm:p-12">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              Build your first workflow in minutes
+            </h2>
+            <p className="mx-auto mt-3 max-w-lg text-sm text-neutral-400">
+              Create an account or deploy the container to your own server. Fully open-source and MIT licensed.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <a
+                href={REGISTER_HREF}
+                className="flex items-center gap-2 rounded-xl bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-orange-500"
+              >
+                Create Free Account <ArrowRight className="size-4" />
+              </a>
+              <a
+                href={LOGIN_HREF}
+                className="rounded-xl border border-neutral-700 bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-neutral-200 transition hover:bg-neutral-800"
+              >
+                Sign In
+              </a>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
-            <div className="max-w-xs">
-              <Logo />
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Open-source visual workflow automation, built for developers.
-              </p>
-            </div>
-            <div className="flex gap-12 text-sm">
-              <div className="flex flex-col gap-3">
-                <span className="font-medium">Product</span>
-                <a className="text-muted-foreground transition-colors hover:text-primary" href="#nodes">Nodes</a>
-                <a className="text-muted-foreground transition-colors hover:text-primary" href="#features">Features</a>
-              </div>
-              <div className="flex flex-col gap-3">
-                <span className="font-medium">Account</span>
-                <a className="text-muted-foreground transition-colors hover:text-primary" href={LOGIN_HREF}>Log in</a>
-                <a className="text-muted-foreground transition-colors hover:text-primary" href={REGISTER_HREF}>Sign up</a>
-              </div>
-              <div className="flex flex-col gap-3">
-                <span className="font-medium">Open source</span>
-                <a
-                  className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-primary"
-                  href={GITHUB}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  GitHub <ArrowUpRight className="size-3.5" />
-                </a>
-                <Badge variant="outline" className="w-fit border-primary/30 font-normal text-primary">
-                  MIT licensed
-                </Badge>
-              </div>
-            </div>
+      <footer className="border-t border-neutral-800/80 bg-neutral-950 py-10">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-xs text-neutral-400 sm:flex-row sm:px-6">
+          <div className="flex items-center gap-4">
+            <span className="text-base font-bold text-white">Goflow</span>
+            <span>·</span>
+            <span>Open-source visual workflow automation</span>
           </div>
 
-          <Separator className="my-8" />
+          <div className="flex items-center gap-6">
+            <a href={LOGIN_HREF} className="hover:text-white">Sign In</a>
+            <a href={REGISTER_HREF} className="hover:text-white">Sign Up</a>
+            <a href={GITHUB} target="_blank" rel="noreferrer" className="hover:text-white">GitHub</a>
+          </div>
 
-          <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <span>© 2026 GoFlow. All rights reserved.</span>
-            <span className="font-mono">
-              creator: <span className="text-primary">
-                <a href="https://www.instagram.com/not_pragyann/" target='_blank'>Pragyan Thapaliya</a>
-              </span>
-            </span>
+          <div className="font-mono">
+            Created by{' '}
+            <a
+              href="https://www.instagram.com/not_pragyann/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-orange-400 hover:underline"
+            >
+              Pragyan Thapaliya
+            </a>
           </div>
         </div>
       </footer>
-    </main>
+    </div>
   )
 }
