@@ -7,7 +7,6 @@ import React from 'react'
 import { useWorkflowStore } from '@/store/useWorkflowStore';
 import WorkflowNodeUi from '@/components/feature/workflows/WorkflowNodeUi';
 import { useWorkflowNodeForm } from '@/store/useWorkflowNodeForm';
-import { stat } from 'fs';
 import WorkflowNodesForm from '@/components/feature/workflows/WorkflowNodesForm';
 import { useParams } from 'next/navigation';
 import { useFetchWorkflow } from '@/hooks/useWorkflows';
